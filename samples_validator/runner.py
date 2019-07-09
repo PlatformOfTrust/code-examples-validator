@@ -251,5 +251,5 @@ class TestSession:
 
 
 def make_session_from_dir(path: Path) -> TestSession:
-    all_samples = load_code_samples(path, [Language.js, Language.shell])
+    all_samples = load_code_samples(path)
     return TestSession(all_samples)
