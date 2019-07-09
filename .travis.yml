@@ -1,0 +1,12 @@
+dist: xenial
+language: python
+python:
+#  - "3.6"
+  - "3.7"
+before_install:
+  - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+install:
+  - poetry install
+script:
+  - poetry run mypy samples_validator
+  - poetry run pytest

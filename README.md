@@ -1,5 +1,7 @@
 ## PoT code samples validation tool
 
+[![Build Status](https://travis-ci.org/PlatformOfTrust/code-examples-validator.svg?branch=master)](https://travis-ci.org/PlatformOfTrust/code-examples-validator)
+
 ### Installation
 First of all you need to have python environment ready (3.6+)
 1) Install [poetry][poetry-install]
