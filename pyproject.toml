@@ -1,0 +1,46 @@
+[tool.poetry]
+name = "code-samples-validator"
+version = "0.1.0"
+description = "Code samples validator"
+authors = ["Platform Of Trust"]
+packages = [
+    { include="samples_validator", from="." },
+]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+loguru = "^0.3.0"
+click = "^7.0"
+virtualenv = "^16.6"
+pydantic = "^0.30.0"
+pyyaml = "^5.1"
+
+[tool.poetry.dev-dependencies]
+flake8 = "^3.7"
+pytest = "^5.0"
+flake8-builtins = "^1.4"
+flake8-commas = "^2.0"
+flake8-quotes = "^2.0"
+#flake8-docstrings = "^1.3"
+flake8-comprehensions = "^2.1"
+flake8-print = "^3.1"
+flake8-annotations-complexity = "^0.0.2"
+pep8-naming = "^0.8.2"
+flake8-rst-docstrings = "^0.0.10"
+flake8-pep3101 = "^1.2"
+flake8-bugbear = "^19.3"
+flake8-coding = "^1.3"
+flake8-eradicate = "^0.2.0"
+flake8-bandit = "^2.1"
+flake8-broken-line = "^0.1.0"
+mypy = "^0.711.0"
+pytest-cov = "^2.7"
+flake8-import-order = "^0.18.1"
+
+[tool.poetry.scripts]
+samples-validator = "samples_validator.cli:run_tests"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
+
