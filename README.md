@@ -1,6 +1,7 @@
 ## PoT code samples validation tool
 
 [![Build Status](https://travis-ci.org/PlatformOfTrust/code-examples-validator.svg?branch=master)](https://travis-ci.org/PlatformOfTrust/code-examples-validator)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=PlatformOfTrust_Code_Examples_Validator&metric=alert_status)](https://sonarcloud.io/dashboard?id=PlatformOfTrust_Code_Examples_Validator)
 
 ### Installation
 First of all you need to have python environment ready (3.6+)

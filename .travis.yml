@@ -1,12 +1,18 @@
 dist: xenial
 language: python
 python:
-  - "3.6"
+#  - "3.6"
   - "3.7"
+addons:
+  sonarcloud:
+    organization: "platformoftrust"
+    token:
+      secure: "VQj4yZ89Qk1ojje01z3WaUNz3ZqBISzUt5BTvOO9ejaImiXlzUclSKDAom0tLiD8cCac4ZWfZMz2iSJ+7sN+XwVui9dMQjuJjr3G7/Pg6rnYEHrXWdjPOmZhcq/VmS9RXh6yyBPZ7u0F8wMDLiIQpNlrvFKBNyC1L7BvBzUzXRKpaq3z0O0YqFhIpkd8FhrcBI+Q+zWtWgc5UhudYDMaxAsK8r9FjasqulzKBkW9Z+3rA1+lWhVhRo2MqmGNTL2OrX30ItzaP+0I7SsDKz6EEZ0x+uDDea9vuWF7odol7mEMu5gjS40g8i0dcxlwBu7hk8uycH3ZMAaQTTBGdDI5kcmIsz6gKm011d0aKPapIviORicq4ptZ7xh+bZ8rvU5EsHyK4Wk9ohzDU85IWH9Mq6da8PlaJT3Ak2XSg9cTvhEVuaXNmetrKRbPzgRCgw51LjMMNrr5lLGO9+iL3493DU3iaWsI9n8ht0gfbS23ju1XDq34SK8dZ3MVHaD/ztRU5/Kpjx+GSq5EUNUVg4ci9MhRmuYeMb8shjFds5g9LzLx/8uSPcRb9nN5oxm5xXGuvYlSoHU4xZY2BHUfUVV4PTrVBk4UXU34TLt8I5NixlskswA6Zs/p4mQHvxqLGz7Kkp7IdJXc2OeFrDiW/oW3NevQT5qiNGegzj1kmzcQias="
 before_install:
   - pip install poetry
 install:
   - poetry install
 script:
-  - poetry run mypy samples_validator
-  - poetry run pytest
+#  - poetry run mypy samples_validator
+#  - poetry run pytest
+  - sonar-scanner
