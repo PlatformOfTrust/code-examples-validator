@@ -5,3 +5,6 @@
 .mypy_cache
 .sonar_lock
 report-task.txt
+.coverage
+junit.xml
+coverage.xml

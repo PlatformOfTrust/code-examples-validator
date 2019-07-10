@@ -36,6 +36,7 @@ flake8-broken-line = "^0.1.0"
 mypy = "^0.711.0"
 pytest-cov = "^2.7"
 flake8-import-order = "^0.18.1"
+coverage = "^4.5"
 
 [tool.poetry.scripts]
 samples-validator = "samples_validator.cli:run_tests"
