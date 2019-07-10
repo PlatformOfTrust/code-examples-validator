@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import List
 from unittest.mock import MagicMock
 
 import pytest
@@ -88,3 +89,17 @@ def mocked_parse_stdout(monkeypatch):
         monkeypatch.setattr(f'samples_validator.runner.{name}._parse_stdout',
                             mocked_method)
     return mocked_method
+
+
+@pytest.fixture
+def temp_files_factory(tmp_path):
+    def factory(rel_paths: List[str]):
+        for rel_path in rel_paths:
+            dir_path = tmp_path / Path(rel_path).parent
+            dir_path.mkdir(parents=True, exist_ok=True)
+            tmp_path / Path(rel_path)
+            f_path = tmp_path / rel_path
+            f_path.touch()
+        return tmp_path
+
+    return factory

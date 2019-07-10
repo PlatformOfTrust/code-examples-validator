@@ -1,5 +1,6 @@
+from collections import defaultdict
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from samples_validator.base import CodeSample, HttpMethod, Language
 
@@ -23,8 +24,22 @@ def load_code_samples(
             if sample.lang in languages:
                 samples.append(sample)
 
-    return samples
+    return sort_code_samples(samples)
 
 
 def sort_code_samples(samples: List[CodeSample]) -> List[CodeSample]:
-    pass
+    scheme = Dict[str, Dict[HttpMethod, CodeSample]]
+    endpoints_by_lang: scheme = defaultdict(dict)
+    sorted_samples = []
+    correct_order = (
+        HttpMethod.post, HttpMethod.get, HttpMethod.put, HttpMethod.delete,
+    )
+    for sample in samples:
+        key = sample.path.parent.parent
+        endpoints_by_lang[f'{sample.lang}{key}'][sample.http_method] = sample
+
+    for sample_by_method in endpoints_by_lang.values():
+        for method in correct_order:
+            if sample_by_method.get(method):
+                sorted_samples.append(sample_by_method[method])
+    return sorted_samples

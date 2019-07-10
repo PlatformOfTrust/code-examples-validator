@@ -1,7 +1,7 @@
 dist: xenial
 language: python
 python:
-#  - "3.6"
+  - "3.6"
   - "3.7"
 addons:
   sonarcloud:
@@ -13,6 +13,6 @@ before_install:
 install:
   - poetry install
 script:
-#  - poetry run mypy samples_validator
-#  - poetry run pytest
+  - poetry run mypy samples_validator
+  - poetry run pytest
   - sonar-scanner

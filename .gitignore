@@ -3,3 +3,5 @@
 .pytest_cache
 .idea
 .mypy_cache
+.sonar_lock
+report-task.txt
