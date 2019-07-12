@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -6,7 +7,7 @@ from pydantic import BaseModel
 
 
 class Config(BaseModel):
-    sample_timeout: int
+    sample_timeout: int = 1
     virtualenv_creation_timeout: int = 120
     virtualenv_name: str = '.pot-svt-env'
     js_project_dir_name: str = '.pot-node'
@@ -17,6 +18,24 @@ class Config(BaseModel):
         new_conf = load_config(path)
         for name, value in new_conf:
             setattr(self, name, value)
+        self._replace_env_vars()
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        self._replace_env_vars()
+
+    def _replace_env_vars(self):
+        if self.substitutions is None:
+            return
+        for key, value in self.substitutions.items():
+            if value.startswith('$'):
+                var_name = value[1:]
+                real_value = os.environ.get(var_name)
+                if real_value is not None:
+                    self.substitutions[key] = real_value
+                else:
+                    raise ValueError(
+                        f'Failed to find {var_name} in the environment')
 
 
 def load_config(path: Path):
