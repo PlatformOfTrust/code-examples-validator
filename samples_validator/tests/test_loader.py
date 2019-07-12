@@ -25,6 +25,23 @@ def test_base_loading(sample_filename, temp_files_factory, run_sys_cmd):
 
 
 @pytest.mark.parametrize(
+    'sample_path,expected_name', [
+        ('api/u.raml/_users_v1/GET/curl',
+         'api/users/v1'),
+        ('api/u.raml/_users_v1_{from}_link_{to}/GET/curl',
+         'api/users/v1/{from}/link/{to}'),
+        ('api/u.raml/_users_v1_{from}_link_{to}_{type}/GET/curl',
+         'api/users/v1/{from}/link/{to}/{type}'),
+    ])
+def test_correct_name_is_loaded(sample_path, expected_name,
+                                temp_files_factory, run_sys_cmd):
+    root_dir = temp_files_factory([sample_path])
+    samples = load_code_samples(root_dir)
+    assert samples
+    assert samples[0].name == expected_name
+
+
+@pytest.mark.parametrize(
     'dir_name,expected_method', [
         ('POST', HttpMethod.post), ('GET', HttpMethod.get),
         ('DELETE', HttpMethod.delete), ('PUT', HttpMethod.put),

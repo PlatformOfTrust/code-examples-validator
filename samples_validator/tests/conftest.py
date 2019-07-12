@@ -6,6 +6,7 @@ import pytest
 
 from samples_validator.base import CodeSample, HttpMethod, Language, \
     SystemCmdResult
+from samples_validator.loader import load_code_samples
 from samples_validator.runner import CurlRunner, PythonRunner, NodeRunner, \
     CodeRunner
 
@@ -15,38 +16,6 @@ def run_sys_cmd(monkeypatch):
     mocked_fn = MagicMock(return_value=SystemCmdResult(0, '', ''))
     monkeypatch.setattr('samples_validator.runner.run_shell_command', mocked_fn)
     return mocked_fn
-
-
-@pytest.fixture
-def curl_runner(run_sys_cmd):
-    return CurlRunner()
-
-
-@pytest.fixture
-def node_runner(run_sys_cmd, monkeypatch):
-    monkeypatch.setattr(
-        'samples_validator.runner.NodeRunner._prepare_sample',
-        MagicMock(return_value=Path('/tmp/sample.js'))
-    )
-    monkeypatch.setattr(
-        'samples_validator.runner.NodeRunner._cleanup',
-        MagicMock()
-    )
-    return NodeRunner()
-
-
-@pytest.fixture
-def python_runner(run_sys_cmd):
-    return PythonRunner()
-
-
-@pytest.fixture
-def curl_sample():
-    return CodeSample(
-        path=Path('/tmp/sample.sh'),
-        name='sample.sh',
-        http_method=HttpMethod.get
-    )
 
 
 @pytest.fixture
@@ -68,16 +37,22 @@ def js_sample():
 
 
 @pytest.fixture
-def runner_sample_factory(curl_runner, curl_sample, python_runner,
-                          python_sample, js_sample, node_runner):
+def runner_sample_factory(temp_files_factory):
     def factory(lang: Language) -> (CodeRunner, CodeSample):
         if lang == Language.shell:
-            return curl_runner, curl_sample
+            runner = CurlRunner()
+            name = 'curl'
         elif lang == Language.python:
-            return python_runner, python_sample
+            runner = PythonRunner()  # type: ignore
+            name = 'sample.py'
         elif lang == Language.js:
-            return node_runner, js_sample
-        raise ValueError('Unknown lang')
+            runner = NodeRunner()  # type: ignore
+            name = 'sample.js'
+        else:
+            raise ValueError('Unknown language')
+        root_dir = temp_files_factory([f'api/GET/{name}'])
+        sample = load_code_samples(root_dir)[0]
+        return runner, sample
 
     return factory
 

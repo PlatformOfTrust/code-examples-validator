@@ -7,7 +7,8 @@ from samples_validator import errors
 from samples_validator.base import SystemCmdResult, Language
 
 
-def test_curl_404(run_sys_cmd, curl_runner, curl_sample):
+def test_curl_404(run_sys_cmd, runner_sample_factory):
+    runner, sample = runner_sample_factory(Language.shell)
     stdout = textwrap.dedent("""
     HTTP/1.1 404 Not Found
     Content-Type: application/json
@@ -19,7 +20,7 @@ def test_curl_404(run_sys_cmd, curl_runner, curl_sample):
     run_sys_cmd.return_value = SystemCmdResult(
         exit_code=0, stdout=stdout, stderr=''
     )
-    test_result = curl_runner.run_sample(curl_sample)
+    test_result = runner.run_sample(sample)
     assert not test_result.passed
     assert test_result.status_code == 404
     assert test_result.json_body == {
@@ -27,7 +28,8 @@ def test_curl_404(run_sys_cmd, curl_runner, curl_sample):
     }
 
 
-def test_curl_200(run_sys_cmd, curl_runner, curl_sample):
+def test_curl_200(run_sys_cmd, runner_sample_factory):
+    runner, sample = runner_sample_factory(Language.shell)
     stdout = textwrap.dedent("""
     HTTP/1.1 200 OK
     Content-Type: application/json
@@ -39,13 +41,14 @@ def test_curl_200(run_sys_cmd, curl_runner, curl_sample):
     run_sys_cmd.return_value = SystemCmdResult(
         exit_code=0, stdout=stdout, stderr=''
     )
-    test_result = curl_runner.run_sample(curl_sample)
+    test_result = runner.run_sample(sample)
     assert test_result.passed
     assert test_result.status_code == 200
     assert test_result.json_body == {}
 
 
-def test_curl_200_rn_rn(run_sys_cmd, curl_runner, curl_sample):
+def test_curl_200_rn_rn(run_sys_cmd, runner_sample_factory):
+    runner, sample = runner_sample_factory(Language.shell)
     stdout = textwrap.dedent("""
     HTTP/1.1 200 OK
     Content-Type: application/json
@@ -57,13 +60,14 @@ def test_curl_200_rn_rn(run_sys_cmd, curl_runner, curl_sample):
     run_sys_cmd.return_value = SystemCmdResult(
         exit_code=0, stdout=stdout, stderr=''
     )
-    test_result = curl_runner.run_sample(curl_sample)
+    test_result = runner.run_sample(sample)
     assert test_result.passed
     assert test_result.status_code == 200
     assert test_result.json_body == {}
 
 
-def test_curl_not_json(run_sys_cmd, curl_runner, curl_sample):
+def test_curl_not_json(run_sys_cmd, runner_sample_factory):
+    runner, sample = runner_sample_factory(Language.shell)
     stdout = textwrap.dedent("""
     HTTP/1.0 400 Bad request
     Cache-Control: no-cache
@@ -77,18 +81,19 @@ def test_curl_not_json(run_sys_cmd, curl_runner, curl_sample):
     run_sys_cmd.return_value = SystemCmdResult(
         exit_code=0, stdout=stdout, stderr=''
     )
-    test_result = curl_runner.run_sample(curl_sample)
+    test_result = runner.run_sample(sample)
     assert not test_result.passed
     assert test_result.status_code is None
     assert test_result.json_body is None
     assert test_result.reason == errors.OutputParsingError
 
 
-def test_curl_non_valid_stdout(run_sys_cmd, curl_runner, curl_sample):
+def test_curl_non_valid_stdout(run_sys_cmd, runner_sample_factory):
+    runner, sample = runner_sample_factory(Language.shell)
     run_sys_cmd.return_value = SystemCmdResult(
         exit_code=0, stdout='', stderr=''
     )
-    test_result = curl_runner.run_sample(curl_sample)
+    test_result = runner.run_sample(sample)
     assert not test_result.passed
     assert test_result.status_code is None
     assert test_result.json_body is None

@@ -25,7 +25,8 @@ def run_tests(samples_dir: str, config: str):
         from samples_validator.conf import conf, load_config
         conf.update(load_config(Path(config)))
     test_session = make_session_from_dir(Path(samples_dir))
-    test_session.run()
+    failed_tests_count = test_session.run()
+    sys.exit(failed_tests_count)
 
 
 def setup_logging():

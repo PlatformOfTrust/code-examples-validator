@@ -74,3 +74,6 @@ def run_shell_command(
         stdout=str(stdout, 'utf8'),
         stderr=str(stderr, 'utf8'),
     )
+
+
+ALL_LANGUAGES = [Language.python, Language.js, Language.shell]

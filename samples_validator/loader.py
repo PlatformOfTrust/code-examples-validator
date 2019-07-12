@@ -1,8 +1,23 @@
+import os
 from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Optional
 
 from samples_validator.base import CodeSample, HttpMethod, Language
+
+
+def get_http_method_from_path(path: Path) -> HttpMethod:
+    return HttpMethod(path.parent.name.upper())
+
+
+def make_sample_name_from_path(path: Path) -> str:
+    str_path = str(path.parent.parent)
+    path_parts = str_path.split(os.sep)
+    endpoint = path_parts[-1].replace('_', os.sep)
+    parents = os.sep.join(
+        name for name in path_parts[:-1] if not name.endswith('raml')
+    )
+    return parents + endpoint
 
 
 def load_code_samples(
@@ -14,8 +29,8 @@ def load_code_samples(
     valid_extensions = ('.js', '.py', 'curl')
     for file_path in root.glob('**/*'):
         if str(file_path).endswith(valid_extensions):
-            http_method = HttpMethod(file_path.parent.name.upper())
-            name = file_path.relative_to(root).parent.parent.as_posix()
+            http_method = get_http_method_from_path(file_path)
+            name = make_sample_name_from_path(file_path.relative_to(root))
             sample = CodeSample(
                 file_path,
                 http_method=http_method,

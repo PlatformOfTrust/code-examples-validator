@@ -1,9 +1,7 @@
 import pytest
 
 from samples_validator import errors
-from samples_validator.base import SystemCmdResult, Language
-
-ALL_LANGUAGES = [Language.python, Language.js, Language.shell]
+from samples_validator.base import SystemCmdResult, ALL_LANGUAGES
 
 
 @pytest.mark.parametrize('lang', ALL_LANGUAGES)

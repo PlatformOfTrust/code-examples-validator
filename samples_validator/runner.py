@@ -5,7 +5,7 @@ import shutil
 import tempfile
 from abc import abstractmethod
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import virtualenv
 
@@ -38,7 +38,7 @@ class CodeRunner(object):
         """
 
     @abstractmethod
-    def _prepare_sample(self, path: Path) -> Path:
+    def prepare_sample(self, path: Path) -> Path:
         """Sample preparation"""
 
     def _cleanup(self, sample: CodeSample):
@@ -48,7 +48,7 @@ class CodeRunner(object):
             os.remove(self.tmp_sample_path.as_posix())
 
     def run_sample(self, sample: CodeSample) -> ApiTestResult:
-        self.tmp_sample_path = self._prepare_sample(sample.path)
+        self.tmp_sample_path = self.prepare_sample(sample.path)
         try:
             return self.analyze_result(sample)
         finally:
@@ -103,6 +103,16 @@ class CodeRunner(object):
         except KeyError:
             raise errors.OutputParsingError
 
+    @staticmethod
+    def replace_keywords(
+            text: str,
+            subs: Optional[Dict[str, str]] = None) -> str:
+        if subs is None:
+            subs = conf.substitutions or {}
+        for replace_from, replace_to in subs.items():
+            text = text.replace(replace_from, replace_to)
+        return text
+
 
 class NodeRunner(CodeRunner):
 
@@ -113,9 +123,11 @@ class NodeRunner(CodeRunner):
         self._node_modules_path = self._project_dir_path / 'node_modules'
         self._install_node_modules_if_needed()
 
-    def _prepare_sample(self, path: Path) -> Path:
+    def prepare_sample(self, path: Path) -> Path:
         tmp_sample_path: Path = self._project_dir_path / 'sample.js'
-        shutil.copy(path.as_posix(), tmp_sample_path.as_posix())
+        sample_code = path.read_text()
+        prepared_code = self.replace_keywords(sample_code)
+        tmp_sample_path.write_text(prepared_code)
         return tmp_sample_path
 
     def _install_node_modules_if_needed(self):
@@ -147,15 +159,19 @@ class NodeRunner(CodeRunner):
 
 class PythonRunner(CodeRunner):
 
-    def _prepare_sample(self, path: Path) -> Path:
-        return path
-
     def __init__(self):
         super().__init__()
         tmp_path = Path(tempfile.gettempdir())
         self._virtualenv_path = tmp_path / conf.virtualenv_name
         self._python_path = self._virtualenv_path / 'bin' / 'python'
         self._create_virtualenv_if_needed()
+
+    def prepare_sample(self, path: Path) -> Path:
+        tmp_sample_path = Path(tempfile.gettempdir()) / 'sample.py'
+        sample_code = path.read_text()
+        prepared_code = self.replace_keywords(sample_code)
+        tmp_sample_path.write_text(prepared_code)
+        return tmp_sample_path
 
     def _create_virtualenv_if_needed(self):
         if conf.always_create_environments and self._virtualenv_path.exists():
@@ -185,8 +201,12 @@ class PythonRunner(CodeRunner):
 
 class CurlRunner(CodeRunner):
 
-    def _prepare_sample(self, path: Path) -> Path:
-        return path
+    def prepare_sample(self, path: Path) -> Path:
+        tmp_sample_path = Path(tempfile.gettempdir()) / 'curl'
+        sample_code = path.read_text()
+        prepared_code = self.replace_keywords(sample_code)
+        tmp_sample_path.write_text(prepared_code)
+        return tmp_sample_path
 
     def _run_sample(self, sample: CodeSample):
         bash_bin = '/bin/bash'
@@ -195,7 +215,7 @@ class CurlRunner(CodeRunner):
     def _parse_stdout(self, stdout: str):
         try:
             meta_info, body = stdout.strip().replace('\r', '').split('\n\n')
-            match = re.match(r'HTTP.*? (?P<code>\d+) .*', meta_info)
+            match = re.match(r'HTTP.*? (?P<code>\d+) ', meta_info)
             if match:
                 status_code = int(match.group('code'))
             else:
@@ -219,14 +239,14 @@ class TestSession:
         }
         self.samples = samples
 
-    def run(self):
+    def run(self) -> int:
         reporter = Reporter()
-        samples_by_lang = {
+        samples_by_lang: Dict[Language, List[CodeSample]] = {
             Language.js: [],
             Language.python: [],
             Language.shell: [],
         }
-        results = []
+        results: List[ApiTestResult] = []
         for sample in self.samples:
             samples_by_lang[sample.lang].append(sample)
 
@@ -236,6 +256,8 @@ class TestSession:
             )
 
         reporter.print_test_session_report(results)
+        failed_count = sum(1 for res in results if not res.passed)
+        return failed_count
 
     def run_api_tests_for_lang(self, samples: List[CodeSample], lang: Language):
         reporter = Reporter()
