@@ -32,6 +32,8 @@ def test_base_loading(sample_filename, temp_files_factory, run_sys_cmd):
          'api/users/v1/{from}/link/{to}'),
         ('api/u.raml/_users_v1_{from}_link_{to}_{type}/GET/curl',
          'api/users/v1/{from}/link/{to}/{type}'),
+        ('api/u.raml/_users_v1_{from_id}/GET/curl',
+         'api/users/v1/{from_id}'),
     ])
 def test_correct_name_is_loaded(sample_path, expected_name,
                                 temp_files_factory, run_sys_cmd):
@@ -64,4 +66,49 @@ def test_sorting_by_endpoint(temp_files_factory, run_sys_cmd):
     methods = [sample.http_method for sample in samples]
     assert methods == [
         HttpMethod.post, HttpMethod.get, HttpMethod.put, HttpMethod.delete
+    ]
+
+
+def test_parents_and_child_sorting_simple(temp_files_factory):
+    root_dir = temp_files_factory([
+        'api/_parent/POST/curl',
+        'api/_parent_{id}/DELETE/curl',
+        'api/_parent_{id}_child/POST/curl',
+        'api/_parent_{id}_child_{childId}/DELETE/curl',
+    ])
+    samples = load_code_samples(root_dir)
+    sorted_names = [(sample.name, sample.http_method) for sample in samples]
+    assert sorted_names == [
+        ('api/parent', HttpMethod.post),
+        ('api/parent/{id}/child', HttpMethod.post),
+        ('api/parent/{id}/child/{childId}', HttpMethod.delete),
+        ('api/parent/{id}', HttpMethod.delete),
+    ]
+
+
+def test_parents_and_child_sorting_all_methods(temp_files_factory):
+    files_structure = [
+        ('api/_parent', ('GET', 'POST')),
+        ('api/_parent_{id}', ('GET', 'PUT', 'DELETE')),
+        ('api/_parent_{id}_child', ('GET', 'POST')),
+        ('api/_parent_{id}_child_{childId}', ('GET', 'PUT', 'DELETE')),
+    ]
+    resources = []
+    for prefix, methods in files_structure:
+        for method in methods:
+            resources.append(f'{prefix}/{method}/curl')
+
+    samples = load_code_samples(temp_files_factory(resources))
+    sorted_names = [(sample.name, sample.http_method) for sample in samples]
+    assert sorted_names == [
+        ('api/parent', HttpMethod.post),
+        ('api/parent', HttpMethod.get),
+        ('api/parent/{id}', HttpMethod.get),
+        ('api/parent/{id}', HttpMethod.put),
+        ('api/parent/{id}/child', HttpMethod.post),
+        ('api/parent/{id}/child', HttpMethod.get),
+        ('api/parent/{id}/child/{childId}', HttpMethod.get),
+        ('api/parent/{id}/child/{childId}', HttpMethod.put),
+        ('api/parent/{id}/child/{childId}', HttpMethod.delete),
+        ('api/parent/{id}', HttpMethod.delete),
     ]
