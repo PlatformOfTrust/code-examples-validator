@@ -59,6 +59,12 @@ class Reporter:
     def _explain_timeout_error(test_result: ApiTestResult):
         log('Timeout error')
 
+    @staticmethod
+    def _explain_conforming_to_schema(test_result: ApiTestResult):
+        if test_result.sample.lang in (Language.python, Language.js):
+            log('Resulted JSON must contain "raw_body" and "code" fields')
+        Reporter._explain_stdout_parsing(test_result)
+
     def _explain_in_details(self, test_result: ApiTestResult):
         if test_result.passed:
             return
@@ -67,6 +73,7 @@ class Reporter:
             errors.OutputParsingError: self._explain_stdout_parsing,
             errors.BadRequest: self._explain_bad_request,
             errors.ExecutionTimeout: self._explain_timeout_error,
+            errors.ConformToSchemaError: self._explain_conforming_to_schema,
         }.get(test_result.reason)
         if describe_reason is None:
             logger.info(f'Unknown reason for {test_result}')

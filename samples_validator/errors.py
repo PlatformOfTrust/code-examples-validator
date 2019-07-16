@@ -20,3 +20,7 @@ class BadRequest(SampleRuntimeError):
 
 class ExecutionTimeout(SampleRuntimeError):
     pass
+
+
+class ConformToSchemaError(OutputParsingError):
+    pass

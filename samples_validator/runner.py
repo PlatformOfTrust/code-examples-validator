@@ -1,3 +1,4 @@
+import ast
 import json
 import os
 import re
@@ -70,9 +71,9 @@ class CodeRunner(object):
 
         try:
             json_body, status_code = self._parse_stdout(cmd_result.stdout)
-        except errors.OutputParsingError:
+        except errors.OutputParsingError as exc:
             return ApiTestResult(
-                sample, passed=False, reason=errors.OutputParsingError,
+                sample, passed=False, reason=exc.__class__,
                 cmd_result=cmd_result,
             )
 
@@ -91,17 +92,6 @@ class CodeRunner(object):
             sample=sample,
             cmd_result=cmd_result,
         )
-
-    @staticmethod
-    def _parse_json_like_stdout(stdout: str):
-        try:
-            raw_result = json.loads(stdout, encoding='utf8')
-        except json.JSONDecodeError:
-            raise errors.OutputParsingError
-        try:
-            return raw_result['raw_body'], raw_result['code']
-        except KeyError:
-            raise errors.OutputParsingError
 
     @staticmethod
     def replace_keywords(
@@ -154,7 +144,14 @@ class NodeRunner(CodeRunner):
         )
 
     def _parse_stdout(self, stdout: str):
-        return self._parse_json_like_stdout(stdout.strip())
+        try:
+            raw_result = json.loads(stdout.strip(), encoding='utf8')
+        except json.JSONDecodeError:
+            raise errors.OutputParsingError
+        try:
+            return raw_result['raw_body'], raw_result['code']
+        except KeyError:
+            raise errors.ConformToSchemaError
 
 
 class PythonRunner(CodeRunner):
@@ -196,7 +193,14 @@ class PythonRunner(CodeRunner):
         ])
 
     def _parse_stdout(self, stdout: str):
-        return self._parse_json_like_stdout(stdout.strip())
+        try:
+            raw_result = ast.literal_eval(stdout.strip())
+        except (SyntaxError, ValueError):
+            raise errors.OutputParsingError
+        try:
+            return raw_result['raw_body'], raw_result['code']
+        except KeyError:
+            raise errors.ConformToSchemaError
 
 
 class CurlRunner(CodeRunner):

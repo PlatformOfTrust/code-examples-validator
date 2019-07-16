@@ -135,10 +135,12 @@ _json_corrupted = ''
 
 
 @pytest.mark.parametrize('lang', [Language.js, Language.python])
-@pytest.mark.parametrize('stdout', [
-    _json_missing_keys, _json_empty, _json_corrupted
+@pytest.mark.parametrize('stdout, expected_err', [
+    (_json_missing_keys, errors.ConformToSchemaError),
+    (_json_empty, errors.ConformToSchemaError),
+    (_json_corrupted, errors.OutputParsingError),
 ])
-def test_invalid_json_parsing(lang, stdout, run_sys_cmd,
+def test_invalid_json_parsing(lang, stdout, expected_err, run_sys_cmd,
                               runner_sample_factory):
     runner, sample = runner_sample_factory(lang)
     run_sys_cmd.return_value = SystemCmdResult(
@@ -146,4 +148,15 @@ def test_invalid_json_parsing(lang, stdout, run_sys_cmd,
     )
     test_result = runner.run_sample(sample)
     assert not test_result.passed
-    assert test_result.reason == errors.OutputParsingError
+    assert test_result.reason == expected_err
+
+
+def test_python_single_quoted_json_load(run_sys_cmd, runner_sample_factory):
+    runner, sample = runner_sample_factory(Language.python)
+    stdout = "{'raw_body': {}, 'code': 200}"
+    run_sys_cmd.return_value = SystemCmdResult(
+        exit_code=0, stdout=stdout, stderr=''
+    )
+    test_result = runner.run_sample(sample)
+    assert test_result.passed
+    assert test_result.status_code == 200
