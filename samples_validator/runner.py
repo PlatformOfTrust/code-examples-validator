@@ -12,11 +12,11 @@ import virtualenv
 
 from samples_validator import errors
 from samples_validator.base import (
-    ApiTestResult, CodeSample, Language, run_shell_command, SystemCmdResult,
-)
+    ApiTestResult, CodeSample, Language, run_shell_command, SystemCmdResult)
 from samples_validator.conf import conf
 from samples_validator.loader import load_code_samples
 from samples_validator.reporter import debug, Reporter
+from samples_validator.utils import TestExecutionResultMap
 
 
 class CodeRunner(object):
@@ -39,7 +39,10 @@ class CodeRunner(object):
         """
 
     @abstractmethod
-    def prepare_sample(self, path: Path) -> Path:
+    def prepare_sample(
+            self,
+            path: Path,
+            substitutions: Optional[Dict[str, str]] = None) -> Path:
         """Sample preparation"""
 
     def _cleanup(self, sample: CodeSample):
@@ -48,8 +51,11 @@ class CodeRunner(object):
                 and self.tmp_sample_path != sample.path):
             os.remove(self.tmp_sample_path.as_posix())
 
-    def run_sample(self, sample: CodeSample) -> ApiTestResult:
-        self.tmp_sample_path = self.prepare_sample(sample.path)
+    def run_sample(
+            self,
+            sample: CodeSample,
+            substitutions: Optional[Dict[str, str]] = None) -> ApiTestResult:
+        self.tmp_sample_path = self.prepare_sample(sample.path, substitutions)
         try:
             return self.analyze_result(sample)
         finally:
@@ -98,9 +104,13 @@ class CodeRunner(object):
             text: str,
             subs: Optional[Dict[str, str]] = None) -> str:
         if subs is None:
-            subs = conf.substitutions or {}
-        for replace_from, replace_to in subs.items():
-            text = text.replace(replace_from, replace_to)
+            _subs = conf.substitutions or {}
+        else:
+            _subs = {f'{{{k}}}': v for k, v in subs.items()}
+            _subs.update(conf.substitutions or {})
+
+        for replace_from, replace_to in _subs.items():
+            text = text.replace(replace_from, str(replace_to))
         return text
 
 
@@ -113,10 +123,13 @@ class NodeRunner(CodeRunner):
         self._node_modules_path = self._project_dir_path / 'node_modules'
         self._install_node_modules_if_needed()
 
-    def prepare_sample(self, path: Path) -> Path:
+    def prepare_sample(
+            self,
+            path: Path,
+            substitutions: Optional[Dict[str, str]] = None) -> Path:
         tmp_sample_path: Path = self._project_dir_path / 'sample.js'
         sample_code = path.read_text()
-        prepared_code = self.replace_keywords(sample_code)
+        prepared_code = self.replace_keywords(sample_code, substitutions)
         tmp_sample_path.write_text(prepared_code)
         return tmp_sample_path
 
@@ -163,10 +176,13 @@ class PythonRunner(CodeRunner):
         self._python_path = self._virtualenv_path / 'bin' / 'python'
         self._create_virtualenv_if_needed()
 
-    def prepare_sample(self, path: Path) -> Path:
+    def prepare_sample(
+            self,
+            path: Path,
+            substitutions: Optional[Dict[str, str]] = None) -> Path:
         tmp_sample_path = Path(tempfile.gettempdir()) / 'sample.py'
         sample_code = path.read_text()
-        prepared_code = self.replace_keywords(sample_code)
+        prepared_code = self.replace_keywords(sample_code, substitutions)
         tmp_sample_path.write_text(prepared_code)
         return tmp_sample_path
 
@@ -205,10 +221,13 @@ class PythonRunner(CodeRunner):
 
 class CurlRunner(CodeRunner):
 
-    def prepare_sample(self, path: Path) -> Path:
+    def prepare_sample(
+            self,
+            path: Path,
+            substitutions: Optional[Dict[str, str]] = None) -> Path:
         tmp_sample_path = Path(tempfile.gettempdir()) / 'curl'
         sample_code = path.read_text()
-        prepared_code = self.replace_keywords(sample_code)
+        prepared_code = self.replace_keywords(sample_code, substitutions)
         tmp_sample_path.write_text(prepared_code)
         return tmp_sample_path
 
@@ -242,6 +261,7 @@ class TestSession:
             Language.shell: CurlRunner(),
         }
         self.samples = samples
+        self._test_results_map = TestExecutionResultMap()
 
     def run(self) -> int:
         reporter = Reporter()
@@ -270,7 +290,11 @@ class TestSession:
 
         for sample in samples:
             reporter.show_test_is_running(sample)
-            test_result = self.runners[lang].run_sample(sample)
+            substitutions = self._test_results_map.get_parent_body(sample)
+            test_result = self.runners[lang].run_sample(
+                sample, substitutions,
+            )
+            self._test_results_map.put(test_result)
             test_results.append(test_result)
             reporter.show_short_test_status(test_result)
         return test_results

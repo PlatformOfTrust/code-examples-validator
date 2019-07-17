@@ -78,3 +78,16 @@ def temp_files_factory(tmp_path):
         return tmp_path
 
     return factory
+
+
+@pytest.fixture
+def reporter(monkeypatch):
+    monkeypatch.setattr('samples_validator.runner.Reporter', MagicMock())
+
+
+@pytest.fixture
+def no_cleanup(monkeypatch):
+    for name in ('NodeRunner', 'CurlRunner', 'PythonRunner'):
+        monkeypatch.setattr(
+            f'samples_validator.runner.{name}._cleanup', MagicMock()
+        )

@@ -9,16 +9,16 @@ from samples_validator.loader import load_code_samples
 )
 def test_base_loading(sample_filename, temp_files_factory, run_sys_cmd):
     root_dir = temp_files_factory([
-        'api/POST/sample.js',
-        'api/POST/sample.py',
-        'api/POST/curl',
-        'api/POST/trash'
+        'api/endpoint/POST/sample.js',
+        'api/endpoint/POST/sample.py',
+        'api/endpoint/POST/curl',
+        'api/endpoint/POST/trash'
     ])
     samples = load_code_samples(root_dir)
     assert len(samples) == 3
     sample = CodeSample(
-        path=root_dir / f'api/POST/{sample_filename}',
-        name='api',
+        path=root_dir / f'api/endpoint/POST/{sample_filename}',
+        name='api/endpoint',
         http_method=HttpMethod.post
     )
     assert sample in samples
@@ -34,6 +34,8 @@ def test_base_loading(sample_filename, temp_files_factory, run_sys_cmd):
          'api/users/v1/{from}/link/{to}/{type}'),
         ('api/u.raml/_users_v1_{from_id}/GET/curl',
          'api/users/v1/{from_id}'),
+        ('api/u.raml/users/GET/curl',
+         'api/users'),
     ])
 def test_correct_name_is_loaded(sample_path, expected_name,
                                 temp_files_factory, run_sys_cmd):

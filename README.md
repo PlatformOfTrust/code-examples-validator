@@ -49,7 +49,7 @@ poetry run pytest .
 The way this tool works is pretty straightforward:
 1) Parse the samples dir structure and gather all API samples
 (JS, Python, cURL)
-2) Sort samples by HTTP method within an endpoint [TBD]
+2) Sort samples by HTTP method within an endpoint
 3) Create virtual environment for Python, as well as install all the dependencies
 for Python and NodeJS in temporary directory
 4) Run each sample and find out if output is correct
