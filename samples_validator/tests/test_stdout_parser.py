@@ -100,13 +100,15 @@ def test_curl_non_valid_stdout(run_sys_cmd, runner_sample_factory):
     assert test_result.reason == errors.OutputParsingError
 
 
-_json_resp_200 = """
-    {"raw_body": {"status": "ok"}, "code": 200}
-"""
+_json_resp_200 = {
+    Language.python: '{"raw_body": {"status": "ok"}, "code": 200}',
+    Language.js: '{"raw_body": "{\\"status\\": \\"ok\\"}", "code": 200}',
+}
 _json_resp_200_rv = ({'status': 'ok'}, 200)
-_json_resp_empty_dict = """
-    {"raw_body": {}, "code": 201}
-"""
+_json_resp_empty_dict = {
+    Language.python: '{"raw_body": {}, "code": 201}',
+    Language.js: '{"raw_body": "{}", "code": 201}',
+}
 _json_resp_empty_dict_rv: Tuple[dict, int] = ({}, 201)
 
 
@@ -120,7 +122,7 @@ def test_valid_json_parsing(lang, stdout, expected, run_sys_cmd,
     runner, sample = runner_sample_factory(lang)
 
     run_sys_cmd.return_value = SystemCmdResult(
-        exit_code=0, stdout=stdout, stderr=''
+        exit_code=0, stdout=stdout[lang], stderr=''
     )
     json_body, status_code = expected
     test_result = runner.run_sample(sample)
@@ -129,7 +131,7 @@ def test_valid_json_parsing(lang, stdout, expected, run_sys_cmd,
     assert test_result.status_code == status_code
 
 
-_json_missing_keys = '{"raw_body": {}}'
+_json_missing_keys = '{"code": {}}'
 _json_empty = '{}'
 _json_corrupted = ''
 

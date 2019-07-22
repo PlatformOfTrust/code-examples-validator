@@ -14,5 +14,6 @@ install:
   - poetry install
 script:
   - poetry run mypy samples_validator
+  - poetry run flake8 samples_validator
   - poetry run pytest
   - sonar-scanner

@@ -27,7 +27,7 @@ class CodeRunner(object):
     @abstractmethod
     def _run_sample(
             self,
-            sample: CodeSample) -> SystemCmdResult:
+            sample_path: str) -> SystemCmdResult:
         """Language-specific method which runs corresponding system command
         :returns Wrapper over system command result
         """
@@ -57,13 +57,15 @@ class CodeRunner(object):
             substitutions: Optional[Dict[str, str]] = None) -> ApiTestResult:
         self.tmp_sample_path = self.prepare_sample(sample.path, substitutions)
         try:
-            return self.analyze_result(sample)
+            api_test_result = self.analyze_result(sample)
+            api_test_result.source_code = self.tmp_sample_path.read_text()
+            return api_test_result
         finally:
             self._cleanup(sample)
 
     def analyze_result(self, sample: CodeSample) -> ApiTestResult:
         try:
-            cmd_result = self._run_sample(sample)
+            cmd_result = self._run_sample(str(self.tmp_sample_path))
         except errors.ExecutionTimeout:
             return ApiTestResult(
                 sample, passed=False, reason=errors.ExecutionTimeout,
@@ -104,7 +106,7 @@ class CodeRunner(object):
             text: str,
             subs: Optional[Dict[str, str]] = None) -> str:
         if subs is None:
-            _subs = conf.substitutions or {}
+            _subs = conf.substitutions.copy() or {}
         else:
             _subs = {f'{{{k}}}': v for k, v in subs.items()}
             _subs.update(conf.substitutions or {})
@@ -147,22 +149,21 @@ class NodeRunner(CodeRunner):
                 cwd=self._project_dir_path,
             )
 
-    def _run_sample(self, sample: CodeSample):
+    def _run_sample(self, sample_path: str):
         if self.tmp_sample_path is None:
             raise ValueError('Temporary sample was not created')
         node_bin = 'node'
         return run_shell_command(
-            [node_bin, self.tmp_sample_path.as_posix()],
+            [node_bin, sample_path],
             cwd=self._project_dir_path,
         )
 
     def _parse_stdout(self, stdout: str):
         try:
             raw_result = json.loads(stdout.strip(), encoding='utf8')
+            return json.loads(raw_result['raw_body']), raw_result['code']
         except json.JSONDecodeError:
             raise errors.OutputParsingError
-        try:
-            return raw_result['raw_body'], raw_result['code']
         except KeyError:
             raise errors.ConformToSchemaError
 
@@ -203,9 +204,9 @@ class PythonRunner(CodeRunner):
             timeout=conf.virtualenv_creation_timeout,
         )
 
-    def _run_sample(self, sample: CodeSample):
+    def _run_sample(self, sample_path: str):
         return run_shell_command([
-            self._python_path.as_posix(), sample.path.as_posix(),
+            self._python_path.as_posix(), sample_path,
         ])
 
     def _parse_stdout(self, stdout: str):
@@ -231,9 +232,9 @@ class CurlRunner(CodeRunner):
         tmp_sample_path.write_text(prepared_code)
         return tmp_sample_path
 
-    def _run_sample(self, sample: CodeSample):
+    def _run_sample(self, sample_path: str):
         bash_bin = '/bin/bash'
-        return run_shell_command([bash_bin, sample.path.as_posix()])
+        return run_shell_command([bash_bin, sample_path])
 
     def _parse_stdout(self, stdout: str):
         try:
@@ -300,6 +301,8 @@ class TestSession:
         return test_results
 
 
-def make_session_from_dir(path: Path) -> TestSession:
-    all_samples = load_code_samples(path)
+def make_session_from_dir(
+        path: Path,
+        languages: Optional[List[Language]]) -> TestSession:
+    all_samples = load_code_samples(path, languages)
     return TestSession(all_samples)

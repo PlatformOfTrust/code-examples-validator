@@ -4,6 +4,7 @@ from pathlib import Path
 import click
 from loguru import logger
 
+from samples_validator.base import Language
 from samples_validator.runner import make_session_from_dir
 
 
@@ -19,12 +20,18 @@ from samples_validator.runner import make_session_from_dir
     type=click.Path(exists=True, file_okay=True, dir_okay=False),
     help='Path to configuration file',
 )
-def run_tests(samples_dir: str, config: str):
+@click.option(
+    '-l', '--lang',
+    type=click.Choice(['python', 'js', 'shell']),
+    help='Run samples only for that language. Run all of them by default',
+)
+def run_tests(samples_dir: str, config: str, lang: str):
     setup_logging()
     if config:
-        from samples_validator.conf import conf, load_config
-        conf.update(load_config(Path(config)))
-    test_session = make_session_from_dir(Path(samples_dir))
+        from samples_validator.conf import conf
+        conf.reload(Path(config))
+    languages = [Language[lang]] if lang else None
+    test_session = make_session_from_dir(Path(samples_dir), languages)
     failed_tests_count = test_session.run()
     sys.exit(failed_tests_count)
 

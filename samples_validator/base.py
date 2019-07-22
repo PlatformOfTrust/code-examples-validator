@@ -53,6 +53,7 @@ class ApiTestResult(object):
     cmd_result: Optional[SystemCmdResult] = None
     json_body: Optional[dict] = None
     reason: Any = None  # add typing
+    source_code: Optional[str] = None
 
 
 def run_shell_command(

@@ -4,6 +4,7 @@ from loguru import logger
 
 from samples_validator import errors
 from samples_validator.base import ApiTestResult, CodeSample, Language
+from samples_validator.conf import conf
 
 
 def debug(message: str):
@@ -24,19 +25,12 @@ def log_green(message: str):
 
 class Reporter:
 
-    @staticmethod
-    def _explain_non_zero_code(test_result: ApiTestResult):
+    def _explain_non_zero_code(self, test_result: ApiTestResult):
         if not test_result.cmd_result:
             return
         code = test_result.cmd_result.exit_code
-        stdout = test_result.cmd_result.stdout
-        stderr = test_result.cmd_result.stderr
-        stdout_desc = f'STDOUT:\n{stdout}' if stdout else 'NO STDOUT'
-        stderr_desc = f'STDERR:\n{stderr}' if stderr else 'NO STDERR'
-        log(
-            f'Command returned non-zero exit code: {code}\n'
-            f'{stdout_desc}\n{stderr_desc}',
-        )
+        log(f'Command returned non-zero exit code: {code}')
+        self._print_stdout_and_stderr(test_result)
 
     @staticmethod
     def _explain_stdout_parsing(test_result: ApiTestResult):
@@ -52,18 +46,39 @@ class Reporter:
                 log(f'STDERR:\n{stderr}')
 
     @staticmethod
-    def _explain_bad_request(test_result: ApiTestResult):
-        log('Bad request')
+    def _print_stdout_and_stderr(test_result: ApiTestResult):
+        if test_result.cmd_result:
+            stdout = test_result.cmd_result.stdout
+            stderr = test_result.cmd_result.stderr
+            stdout_desc = f'STDOUT:\n{stdout}' if stdout else 'NO STDOUT'
+            stderr_desc = f'STDERR:\n{stderr}' if stderr else 'NO STDERR'
+        else:
+            stdout_desc = 'NO STDOUT'
+            stderr_desc = 'NO STDERR'
+        log(f'{stdout_desc}\n{stderr_desc}')
+
+    def _explain_bad_request(self, test_result: ApiTestResult):
+        log(f'Bad request: {test_result.status_code}')
+        self._print_stdout_and_stderr(test_result)
 
     @staticmethod
     def _explain_timeout_error(test_result: ApiTestResult):
-        log('Timeout error')
+        log(f'Timeout error: {conf.sample_timeout}s')
+
+    @staticmethod
+    def _print_sample_source_code(test_result: ApiTestResult):
+        code = test_result.source_code
+        log(f'Sample source code (with substitutions):\n{code}')
 
     @staticmethod
     def _explain_conforming_to_schema(test_result: ApiTestResult):
         if test_result.sample.lang in (Language.python, Language.js):
             log('Resulted JSON must contain "raw_body" and "code" fields')
         Reporter._explain_stdout_parsing(test_result)
+
+    @staticmethod
+    def _explain_unknown_reason(test_result: ApiTestResult):
+        log('Unknown reason..')
 
     def _explain_in_details(self, test_result: ApiTestResult):
         if test_result.passed:
@@ -74,14 +89,13 @@ class Reporter:
             errors.BadRequest: self._explain_bad_request,
             errors.ExecutionTimeout: self._explain_timeout_error,
             errors.ConformToSchemaError: self._explain_conforming_to_schema,
-        }.get(test_result.reason)
-        if describe_reason is None:
-            logger.info(f'Unknown reason for {test_result}')
-            return
+        }.get(test_result.reason, self._explain_unknown_reason)
+
         log(f'======= Test: {test_result.sample.name} =======')
         log(f'Path: {test_result.sample.path.as_posix()}')
         log(f'Method: {test_result.sample.http_method.value}')
         describe_reason(test_result)
+        self._print_sample_source_code(test_result)
         log('')
 
     @staticmethod
