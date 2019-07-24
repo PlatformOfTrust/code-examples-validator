@@ -81,9 +81,9 @@ class Reporter:
         log('Unknown reason..')
 
     def _explain_in_details(self, test_result: ApiTestResult):
-        if test_result.passed:
+        if test_result.passed and not conf.debug:
             return
-        describe_reason = {
+        error_reason = {
             errors.NonZeroExitCode: self._explain_non_zero_code,
             errors.OutputParsingError: self._explain_stdout_parsing,
             errors.BadRequest: self._explain_bad_request,
@@ -94,7 +94,8 @@ class Reporter:
         log(f'======= Test: {test_result.sample.name} =======')
         log(f'Path: {test_result.sample.path.as_posix()}')
         log(f'Method: {test_result.sample.http_method.value}')
-        describe_reason(test_result)
+        if not test_result.passed:
+            error_reason(test_result)
         self._print_sample_source_code(test_result)
         log('')
 
@@ -116,7 +117,7 @@ class Reporter:
             else:
                 failed_count += 1
                 log_fn = log_red
-                self._explain_in_details(test_result)
+            self._explain_in_details(test_result)
         if failed_count:
             conclusion = 'Test session failed'
         else:

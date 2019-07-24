@@ -16,7 +16,7 @@ from samples_validator.base import (
 from samples_validator.conf import conf
 from samples_validator.loader import load_code_samples
 from samples_validator.reporter import debug, Reporter
-from samples_validator.utils import TestExecutionResultMap
+from samples_validator.utils import parse_edn_spec_file, TestExecutionResultMap
 
 
 class CodeRunner(object):
@@ -55,6 +55,8 @@ class CodeRunner(object):
             self,
             sample: CodeSample,
             substitutions: Optional[Dict[str, str]] = None) -> ApiTestResult:
+        substitutions = substitutions or {}
+        substitutions.update(self.get_substitutions_from_spec(sample))
         self.tmp_sample_path = self.prepare_sample(sample.path, substitutions)
         try:
             api_test_result = self.analyze_result(sample)
@@ -108,12 +110,33 @@ class CodeRunner(object):
         if subs is None:
             _subs = conf.substitutions.copy() or {}
         else:
-            _subs = {f'{{{k}}}': v for k, v in subs.items()}
+            _subs = {
+                (k if k.startswith(('<', '[')) else f'{{{k}}}'): v
+                for k, v in subs.items()
+            }
             _subs.update(conf.substitutions or {})
 
         for replace_from, replace_to in _subs.items():
             text = text.replace(replace_from, str(replace_to))
         return text
+
+    @staticmethod
+    def get_substitutions_from_spec(sample: CodeSample) -> dict:
+        edn_path = sample.path.parent / 'debug.edn'
+        source_code = sample.path.read_text()
+        examples = parse_edn_spec_file(edn_path)
+        substitutions = {}
+        re_json_params = r'\\"(\w+?)\\": ?\\"<(.+?)>\\"'
+        re_array_params = r'\\"(\w+?)\\": ?(\[.+?\])'
+
+        for name, param_value in re.findall(re_json_params, source_code):
+            if name in examples:
+                substitutions[f'<{param_value}>'] = examples[name]
+        for name, param_value in re.findall(re_array_params, source_code):
+            json_array = json.dumps(examples[name])
+            escaped_json_array = json_array.replace('"', '\\"')
+            substitutions[param_value] = escaped_json_array
+        return substitutions
 
 
 class NodeRunner(CodeRunner):
@@ -161,7 +184,10 @@ class NodeRunner(CodeRunner):
     def _parse_stdout(self, stdout: str):
         try:
             raw_result = json.loads(stdout.strip(), encoding='utf8')
-            return json.loads(raw_result['raw_body']), raw_result['code']
+            if isinstance(raw_result['raw_body'], dict):
+                return raw_result['raw_body'], raw_result['code']
+            else:
+                return json.loads(raw_result['raw_body']), raw_result['code']
         except json.JSONDecodeError:
             raise errors.OutputParsingError
         except KeyError:

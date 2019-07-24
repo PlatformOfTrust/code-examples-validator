@@ -1,4 +1,6 @@
+import ast
 from collections import defaultdict
+from pathlib import Path
 from typing import List, Optional
 
 from samples_validator.base import ApiTestResult, CodeSample, HttpMethod
@@ -180,3 +182,43 @@ class CodeSamplesTree:
 
         if HttpMethod.delete in methods:
             result_list.append(methods[HttpMethod.delete])
+
+
+def parse_edn_spec_file(path: Path) -> dict:
+    """Find a possible API param examples in a debug .edn file.
+    If the keyword has a 'type', 'example', and 'description' property
+    then it's considered to be an API param.
+    Example of entry in edn:
+    `{:name {:description "Product", :type "string", :example "Whiskey"}}`
+    It will be parsed to {"name": "Whiskey"}
+    """
+    import edn_format
+    from edn_format import Keyword
+    from edn_format.immutable_dict import ImmutableDict
+
+    edn = edn_format.loads(path.read_text())
+    edn_dump = {}
+
+    def search(current_dict: dict):
+        for key in current_dict.keys():
+            data = current_dict[key]
+            if not isinstance(data, ImmutableDict):
+                continue
+            param_type = data.get(Keyword('type'))
+            param_example = data.get(Keyword('example'))
+            param_description = data.get(Keyword('description'))
+            if param_type and param_example:
+                param_key = key.name.replace('?', '')
+                if param_type == 'array':
+                    param_value = ast.literal_eval(param_example)
+                else:
+                    param_value = str(param_example)
+                edn_dump[param_key] = param_value
+            elif param_type and param_description:
+                param_key = key.name.replace('?', '')
+                edn_dump[param_key] = 'STUB'
+            else:
+                search(current_dict[key])
+
+    search(edn)
+    return edn_dump

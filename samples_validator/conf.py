@@ -13,6 +13,7 @@ class Config(BaseModel):
     js_project_dir_name: str = '.pot-node'
     substitutions: Optional[Dict[str, str]] = None
     always_create_environments: bool = False
+    debug: bool = False
 
     def reload(self, path: Path):
         new_conf = load_config(path)

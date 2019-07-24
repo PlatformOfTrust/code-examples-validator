@@ -75,6 +75,8 @@ def temp_files_factory(tmp_path):
             tmp_path / Path(rel_path)
             f_path = tmp_path / rel_path
             f_path.touch()
+            edn_file = f_path.parent / 'debug.edn'
+            edn_file.write_text('{}')
         return tmp_path
 
     return factory

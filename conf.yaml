@@ -1,3 +1,4 @@
 sample_timeout: 1.5
 substitutions:
   '{version}': 'v1'
+debug: True
