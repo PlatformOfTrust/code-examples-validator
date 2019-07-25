@@ -48,8 +48,8 @@ class Reporter:
     @staticmethod
     def _print_stdout_and_stderr(test_result: ApiTestResult):
         if test_result.cmd_result:
-            stdout = test_result.cmd_result.stdout
-            stderr = test_result.cmd_result.stderr
+            stdout = test_result.cmd_result.stdout.strip()
+            stderr = test_result.cmd_result.stderr.strip()
             stdout_desc = f'STDOUT:\n{stdout}' if stdout else 'NO STDOUT'
             stderr_desc = f'STDERR:\n{stderr}' if stderr else 'NO STDERR'
         else:
@@ -91,11 +91,14 @@ class Reporter:
             errors.ConformToSchemaError: self._explain_conforming_to_schema,
         }.get(test_result.reason, self._explain_unknown_reason)
 
-        log(f'======= Test: {test_result.sample.name} =======')
+        divider = '=' * 20
+        log(f'{divider} Test: {test_result.sample.name} {divider}')
         log(f'Path: {test_result.sample.path.as_posix()}')
         log(f'Method: {test_result.sample.http_method.value}')
         if not test_result.passed:
             error_reason(test_result)
+        if test_result.passed and conf.debug:
+            self._print_stdout_and_stderr(test_result)
         self._print_sample_source_code(test_result)
         log('')
 

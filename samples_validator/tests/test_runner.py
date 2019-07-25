@@ -4,7 +4,7 @@ from samples_validator import errors
 from samples_validator.base import SystemCmdResult, ALL_LANGUAGES, Language, \
     HttpMethod, ApiTestResult
 from samples_validator.loader import load_code_samples
-from samples_validator.runner import TestSession, TestExecutionResultMap
+from samples_validator.session import TestSession, TestExecutionResultMap
 
 
 @pytest.mark.parametrize('lang', ALL_LANGUAGES)

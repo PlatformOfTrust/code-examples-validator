@@ -11,7 +11,7 @@ def test_substitutions_from_conf(lang, run_sys_cmd,
     runner, sample = runner_sample_factory(lang)
     sample.path.write_text('lib.get("url", token=<AUTH_TOKEN>)')
     monkeypatch.setattr(
-        'samples_validator.runner.conf.substitutions',
+        f'samples_validator.runner.base.conf.substitutions',
         {'<AUTH_TOKEN>': '"Token"'}
     )
     tmp_sample = runner.prepare_sample(sample.path)
@@ -41,13 +41,13 @@ def test_replace_keywords_method(lang, runner_sample_factory):
     assert replace('[{"a": "b"}]', {'[{"a": "b"}]': '[]'}) == '[]'
 
 
-@pytest.mark.parametrize('lang', ALL_LANGUAGES)
 @pytest.mark.parametrize('edn_example', [
-    edn.simple_param, edn.array_param
+    edn.simple_param_curl, edn.array_param_curl, edn.simple_param_curl_py,
+    edn.array_param_py,
 ])
 def test_get_substitutions_from_spec_method(
-        lang, edn_example, runner_sample_factory, tmp_path):
-    edn_data, expected_dict, source_code, expected_subs = edn_example()
+        edn_example, runner_sample_factory, tmp_path):
+    edn_data, expected_dict, source_code, expected_subs, lang = edn_example()
     runner, sample = runner_sample_factory(lang)
     sample.path.write_text(source_code)
     edn_file = sample.path.parent / 'debug.edn'  # TODO: move it to sample

@@ -5,7 +5,7 @@ import click
 from loguru import logger
 
 from samples_validator.base import Language
-from samples_validator.runner import make_session_from_dir
+from samples_validator.session import make_session_from_dir
 
 
 @click.command()

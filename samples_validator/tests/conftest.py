@@ -14,7 +14,10 @@ from samples_validator.runner import CurlRunner, PythonRunner, NodeRunner, \
 @pytest.fixture
 def run_sys_cmd(monkeypatch):
     mocked_fn = MagicMock(return_value=SystemCmdResult(0, '', ''))
-    monkeypatch.setattr('samples_validator.runner.run_shell_command', mocked_fn)
+    for module in ('python', 'shell', 'js'):
+        monkeypatch.setattr(
+            f'samples_validator.runner.{module}.run_shell_command', mocked_fn
+        )
     return mocked_fn
 
 
@@ -84,7 +87,7 @@ def temp_files_factory(tmp_path):
 
 @pytest.fixture
 def reporter(monkeypatch):
-    monkeypatch.setattr('samples_validator.runner.Reporter', MagicMock())
+    monkeypatch.setattr('samples_validator.session.Reporter', MagicMock())
 
 
 @pytest.fixture
