@@ -26,9 +26,10 @@ class Config(BaseModel):
         super().__init__(**data)
         self._replace_env_vars()
 
-    def _replace_env_vars(self):
+    def _replace_env_vars(self, raise_error: bool = False):
         if self.substitutions is None:
             return
+        missing_variables = []
         for key, value in self.substitutions.items():
             if value.startswith('$'):
                 var_name = value[1:]
@@ -36,8 +37,15 @@ class Config(BaseModel):
                 if real_value is not None:
                     self.substitutions[key] = real_value
                 else:
-                    raise ValueError(
-                        f'Failed to find {var_name} in the environment')
+                    missing_variables.append(var_name)
+        if missing_variables and raise_error:
+            variables = ', '.join(missing_variables)
+            raise ValueError(
+                f'Failed to find variables in the environment: {variables}',
+            )
+
+    def validate_environment(self):
+        self._replace_env_vars(raise_error=True)
 
 
 def load_config(path: Path):

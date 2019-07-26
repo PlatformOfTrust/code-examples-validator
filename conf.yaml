@@ -2,7 +2,7 @@ sample_timeout: 5
 debug: True
 substitutions:
   '{version}': 'v1'
-  '<ACCESS_TOKEN>': '$ACCESS_TOKEN'
+  '<ACCESS_TOKEN>': '$TESTING_ACCESS_TOKEN'
   'api-sandbox.oftrust.net': '$TESTING_API_URL'
 resp_attr_replacements:
   '/products/{version}':

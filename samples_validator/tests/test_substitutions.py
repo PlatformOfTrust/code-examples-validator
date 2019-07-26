@@ -20,8 +20,9 @@ def test_substitutions_from_conf(lang, run_sys_cmd,
 
 
 def test_env_var_substitutions_in_config(monkeypatch):
+    conf = Config(substitutions={'<TOKEN>': '$TOKEN'})
     with pytest.raises(ValueError):
-        Config(substitutions={'<TOKEN>': '$TOKEN'})
+        assert conf.validate_environment()
 
     monkeypatch.setenv('TOKEN', 'xxx')
     config = Config(substitutions={'<TOKEN>': '$TOKEN'})
