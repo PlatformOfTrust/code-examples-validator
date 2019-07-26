@@ -26,14 +26,15 @@ class CurlRunner(CodeRunner):
         return run_shell_command([bash_bin, sample_path])
 
     def _parse_stdout(self, stdout: str):
+        status_code = None
         try:
-            meta_info, body = stdout.strip().replace('\r', '').split('\n\n')
-            match = re.match(r'HTTP.*? (?P<code>\d+) ', meta_info)
+            match = re.match(r'HTTP.*? (?P<code>\d+) ', stdout.strip())
             if match:
                 status_code = int(match.group('code'))
-            else:
-                raise ValueError('Could not match HTTP status code')
+            meta_info, body = stdout.strip().replace('\r', '').split('\n\n')
         except (IndexError, ValueError):
+            if status_code == 204:
+                return None, status_code
             raise errors.OutputParsingError
         try:
             json_body = json.loads(body)

@@ -1,4 +1,11 @@
-sample_timeout: 1.5
+sample_timeout: 5
+debug: True
 substitutions:
   '{version}': 'v1'
-debug: True
+  '<ACCESS_TOKEN>': '$ACCESS_TOKEN'
+  'api-sandbox.oftrust.net': '$TESTING_API_URL'
+resp_attr_replacements:
+  '/products/{version}':
+    'productCode': 'product_code'
+  '/messages/{version}':
+    '@id': 'id'

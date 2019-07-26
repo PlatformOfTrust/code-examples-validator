@@ -3,6 +3,7 @@ import pytest
 from samples_validator import errors
 from samples_validator.base import SystemCmdResult, ALL_LANGUAGES, Language, \
     HttpMethod, ApiTestResult
+from samples_validator.conf import conf
 from samples_validator.loader import load_code_samples
 from samples_validator.session import TestSession, TestExecutionResultMap
 
@@ -85,3 +86,25 @@ def test_save_and_load_test_result_to_map(temp_files_factory):
 
     assert result_map.get_parent_body(parent_sample) == {}
     assert result_map.get_parent_body(child_sample) == {1: 2}
+
+
+def test_reusing_response_from_prev_requests_with_replacements(
+        run_sys_cmd, mocked_parse_stdout, temp_files_factory, reporter,
+        no_cleanup, monkeypatch):
+    root_dir = temp_files_factory([
+        'api/user/POST/curl',
+        'api/user/{id}/GET/curl'
+    ])
+    samples = load_code_samples(root_dir)
+    assert samples[-1].http_method == HttpMethod.get
+
+    mocked_parse_stdout.return_value = ({'@id': 1}, 200)
+    conf.resp_attr_replacements = {'api/user': {'@id': 'id'}}
+    original_source_code = 'curl website/api/user/{id}'
+    expected_source_code = 'curl website/api/user/1'
+    samples[-1].path.write_text(original_source_code)
+
+    session = TestSession(samples)
+    session.run()
+    actual_code = session.runners[Language.shell].tmp_sample_path.read_text()
+    assert actual_code == expected_source_code

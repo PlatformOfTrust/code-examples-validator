@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from samples_validator.base import ApiTestResult, CodeSample, Language
+from samples_validator.conf import conf
 from samples_validator.loader import load_code_samples
 from samples_validator.reporter import Reporter
 from samples_validator.runner import CurlRunner, NodeRunner, PythonRunner
@@ -50,7 +51,10 @@ class TestSession:
             test_result = self.runners[lang].run_sample(
                 sample, substitutions,
             )
-            self._test_results_map.put(test_result)
+            self._test_results_map.put(
+                test_result,
+                replace_keys=conf.resp_attr_replacements.get(sample.name, {}),
+            )
             test_results.append(test_result)
             reporter.show_short_test_status(test_result)
         return test_results

@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict
 
 import yaml
 from pydantic import BaseModel
@@ -11,7 +11,8 @@ class Config(BaseModel):
     virtualenv_creation_timeout: int = 120
     virtualenv_name: str = '.pot-svt-env'
     js_project_dir_name: str = '.pot-node'
-    substitutions: Optional[Dict[str, str]] = None
+    substitutions: Dict[str, str] = {}
+    resp_attr_replacements: Dict[str, Dict[str, str]] = {}
     always_create_environments: bool = False
     debug: bool = False
 

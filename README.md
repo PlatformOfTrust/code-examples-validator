@@ -35,8 +35,7 @@ poetry run samples-validator -s path_to_samples
 where path_to_samples is the result of
 [samples generator tool][samples-generator-gh]
 
-Configuration is made by modifying `conf.yaml`, but currently no changes
-required
+[Configuration](#configuration) is made by modification of `conf.yaml`
 
 ### Testing
 ```bash
@@ -54,7 +53,23 @@ The way this tool works is pretty straightforward:
 for Python and NodeJS in temporary directory
 4) Run each sample and find out if output is correct
 5) Print test session result with detailed failure explanation
- 
+
+### Configuration
+
+**sample_timeout** - Execution timeout per sample  
+**debug** - Extended output like stdout/stderr logging from even
+successful runs  
+**substitutions** - Rules for placeholder replacements in a source code 
+of generated samples  
+**resp_attr_replacements** - Conversion rules for keys in JSON bodies of POST
+responses. For example, you have two code examples: `POST /resource` and
+`GET /resource/{id}`. First endpoint respond with a JSON like
+`{"resourceId": "123}`. So basically you need to get `resourceId` from the 
+previous response and use it as substitution of `{id}` placeholder in the next 
+response. Then you can define such conversion rules per each test.
+   
+
+
 ---
 Copyright © 2019 Platform Of Trust
 

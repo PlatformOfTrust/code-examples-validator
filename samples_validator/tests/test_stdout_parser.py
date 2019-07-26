@@ -88,6 +88,24 @@ def test_curl_not_json(run_sys_cmd, runner_sample_factory):
     assert test_result.reason == errors.OutputParsingError
 
 
+def test_curl_204_response(run_sys_cmd, runner_sample_factory):
+    runner, sample = runner_sample_factory(Language.shell)
+    stdout = """
+    HTTP/1.1 204 No Content
+    Content-Length: 2
+    Strict-Transport-Security: max-age=31536000; includeSubDomains; preload;
+    
+    
+    """
+    run_sys_cmd.return_value = SystemCmdResult(
+        exit_code=0, stdout=stdout, stderr=''
+    )
+    test_result = runner.run_sample(sample)
+    assert test_result.passed
+    assert test_result.status_code == 204
+    assert test_result.json_body is None
+
+
 def test_curl_non_valid_stdout(run_sys_cmd, runner_sample_factory):
     runner, sample = runner_sample_factory(Language.shell)
     run_sys_cmd.return_value = SystemCmdResult(
