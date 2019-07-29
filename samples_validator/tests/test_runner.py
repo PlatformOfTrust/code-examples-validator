@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 import pytest
 
 from samples_validator import errors
@@ -139,6 +141,73 @@ def test_reusing_response_from_prev_requests_nested(
     original_source_code = 'curl /users/{from}/link/{to}/{type}'
     expected_source_code = 'curl /users/uuid/link/{to}/{type}'
     samples[-1].path.write_text(original_source_code)
+
+    session = TestSession(samples)
+    session.run()
+    actual_code = session.runners[Language.shell].tmp_sample_path.read_text()
+    assert actual_code == expected_source_code
+
+
+def test_before_sample_replacements(
+        run_sys_cmd, mocked_parse_stdout, temp_files_factory, reporter,
+        no_cleanup, monkeypatch):
+    root_dir = temp_files_factory([
+        'api/users/POST/curl',
+    ])
+    sample = load_code_samples(root_dir)[0]
+
+    original_source_code = 'curl url --data {"name": "<username>"}'
+    expected_source_code = 'curl url --data {"name": "John"}'
+    sample.path.write_text(original_source_code)
+
+    _post = MagicMock(status_code=200, json=lambda: {'@id': 'John'})
+    monkeypatch.setattr(
+        'samples_validator.prerequisites.base.requests', MagicMock(
+            post=MagicMock(return_value=_post)
+        )
+    )
+    mocked_parse_stdout.return_value = ({}, 200)
+
+    conf.before_sample = {
+        sample.name: {
+            'resource': 'Identity',
+            'subs': {'@id': '<username>'},
+        }
+    }
+
+    session = TestSession([sample])
+    session.run()
+    actual_code = session.runners[Language.shell].tmp_sample_path.read_text()
+    assert actual_code == expected_source_code
+
+
+def test_before_sample_replacements_nested_path(
+        run_sys_cmd, mocked_parse_stdout, temp_files_factory, reporter,
+        no_cleanup, monkeypatch):
+    root_dir = temp_files_factory([
+        'api/users/{id}/link/POST/curl',
+        'api/users/{id}/link/linkID/GET/curl',
+    ])
+    samples = load_code_samples(root_dir)
+
+    original_source_code = 'curl api/users/{id}/link/linkID'
+    expected_source_code = 'curl api/users/John/link/linkID'
+    samples[-1].path.write_text(original_source_code)
+
+    _post = MagicMock(status_code=200, json=lambda: {'@id': 'John'})
+    monkeypatch.setattr(
+        'samples_validator.prerequisites.base.requests', MagicMock(
+            post=MagicMock(return_value=_post)
+        )
+    )
+    mocked_parse_stdout.return_value = ({'stub': 'data'}, 200)
+
+    conf.before_sample = {
+        samples[0].name: {
+            'resource': 'Identity',
+            'subs': {'@id': 'id'},
+        }
+    }
 
     session = TestSession(samples)
     session.run()

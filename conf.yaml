@@ -1,19 +1,36 @@
 sample_timeout: 5
 debug: True
+api_url: '$TESTING_API_URL'
+access_token: '$TESTING_ACCESS_TOKEN'
 substitutions:
   '{version}': 'v1'
   '<ACCESS_TOKEN>': '$TESTING_ACCESS_TOKEN'
   'api-sandbox.oftrust.net': '$TESTING_API_URL'
-  '{to_identity}': '926b7015-47d1-4866-be73-f0ac0b1fbe19'
 resp_attr_replacements:
-  '/products/{version}':
+  'product-api/products/{version}':
     - 'productCode': 'product_code'
-  '/messages/{version}':
+  'message-api/messages/{version}':
     - '@id': 'id'
-  '/calendars/{version}':
+  'calendar-api/calendars/{version}':
     - '@id': 'id'
-  '/identities/v1':
-     - '@id': 'id'
-     - '@id': 'from_identity'
-  '/identities/v1/{from_identity}/link/{to_identity}':
+  'identity-api/identities/v1':
+    - '@id': 'id'
+    - '@id': 'from_identity'
+  'identity-api/identities/v1/{from_identity}/link/{to_identity}':
     - '@type': 'type'
+before_sample:
+  'message-api/messages/{version}':
+    resource: 'Identity'
+    subs:
+      '@id': '<to identity ID>'
+  'calendar-api/calendars/{version}':
+    resource: 'Identity'
+    subs:
+      '@id': '<to identity ID>'
+  'identity-api/identities/v1/{from_identity}/link/{to_identity}':
+    resource: 'Identity'
+    subs:
+      '@id': 'to_identity'
+  'product-api/products/{version}':
+    resource: 'DeleteProduct'
+    subs: {}

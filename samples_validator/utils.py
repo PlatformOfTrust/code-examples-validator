@@ -1,7 +1,7 @@
 import ast
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from samples_validator.base import ApiTestResult, CodeSample, HttpMethod
 
@@ -17,26 +17,28 @@ class TestExecutionResultMap:
 
     def put(self,
             test_result: ApiTestResult,
-            replace_keys: Optional[List[Dict[str, str]]] = None):
+            replace_keys: Optional[List[dict]] = None,
+            extra: Optional[dict] = None):
         replace_keys = replace_keys or []
         parent_body = test_result.json_body or {}
         for replacement in replace_keys:
             for key_from, key_to in replacement.items():
                 if key_from in parent_body:
                     parent_body[key_to] = parent_body[key_from]
+        parent_body.update(extra or {})
         self._put_test_result(
             self._map, test_result, path=test_result.sample.name,
         )
 
     def get_parent_result(self, sample: CodeSample) -> Optional[ApiTestResult]:
         return self._get_parent_test_result(
-            self._map, sample, path=sample.name, current_body={}
+            self._map, sample, path=sample.name, current_body={},
         )
 
     def get_parent_body(self, sample: CodeSample) -> dict:
-        body = {}
+        body: dict = {}
         self._get_parent_test_result(
-            self._map, sample, path=sample.name, current_body=body
+            self._map, sample, path=sample.name, current_body=body,
         )
         return body
 

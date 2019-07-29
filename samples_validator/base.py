@@ -51,6 +51,7 @@ class ApiTestResult(object):
     passed: bool
     status_code: Optional[int] = None
     cmd_result: Optional[SystemCmdResult] = None
+    # be careful, this is not 1:1 mapping from response, it's mutable
     json_body: Optional[dict] = None
     reason: Any = None  # add typing
     source_code: Optional[str] = None

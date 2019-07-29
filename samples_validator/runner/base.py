@@ -47,9 +47,9 @@ class CodeRunner(object):
             self,
             sample: CodeSample,
             substitutions: Optional[Dict[str, str]] = None) -> ApiTestResult:
-        substitutions = substitutions or {}
-        substitutions.update(self.get_substitutions_from_spec(sample))
-        self.tmp_sample_path = self.prepare_sample(sample.path, substitutions)
+        _substitutions = self.get_substitutions_from_spec(sample)
+        _substitutions.update(substitutions or {})
+        self.tmp_sample_path = self.prepare_sample(sample.path, _substitutions)
         try:
             api_test_result = self.analyze_result(sample)
             api_test_result.source_code = self.tmp_sample_path.read_text()

@@ -7,14 +7,17 @@ from pydantic import BaseModel
 
 
 class Config(BaseModel):
-    sample_timeout: int = 1
+    api_url: str
+    access_token: str
+    sample_timeout: int = 5
     virtualenv_creation_timeout: int = 120
     virtualenv_name: str = '.pot-svt-env'
     js_project_dir_name: str = '.pot-node'
     substitutions: Dict[str, str] = {}
-    resp_attr_replacements: Dict[str, List[Dict[str, str]]] = {}
+    resp_attr_replacements: Dict[str, List[dict]] = {}
     always_create_environments: bool = False
     debug: bool = False
+    before_sample: Dict[str, dict] = {}
 
     def reload(self, path: Path):
         new_conf = load_config(path)
@@ -36,6 +39,15 @@ class Config(BaseModel):
                 real_value = os.environ.get(var_name)
                 if real_value is not None:
                     self.substitutions[key] = real_value
+                else:
+                    missing_variables.append(var_name)
+        for key in self.fields:
+            attr = getattr(self, key)
+            if isinstance(attr, str) and attr.startswith('$'):
+                var_name = attr[1:]
+                real_value = os.environ.get(var_name)
+                if real_value is not None:
+                    setattr(self, key, real_value)
                 else:
                     missing_variables.append(var_name)
         if missing_variables and raise_error:
