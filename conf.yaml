@@ -4,8 +4,16 @@ substitutions:
   '{version}': 'v1'
   '<ACCESS_TOKEN>': '$TESTING_ACCESS_TOKEN'
   'api-sandbox.oftrust.net': '$TESTING_API_URL'
+  '{to_identity}': '926b7015-47d1-4866-be73-f0ac0b1fbe19'
 resp_attr_replacements:
   '/products/{version}':
-    'productCode': 'product_code'
+    - 'productCode': 'product_code'
   '/messages/{version}':
-    '@id': 'id'
+    - '@id': 'id'
+  '/calendars/{version}':
+    - '@id': 'id'
+  '/identities/v1':
+     - '@id': 'id'
+     - '@id': 'from_identity'
+  '/identities/v1/{from_identity}/link/{to_identity}':
+    - '@type': 'type'

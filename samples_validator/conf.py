@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List
 
 import yaml
 from pydantic import BaseModel
@@ -12,7 +12,7 @@ class Config(BaseModel):
     virtualenv_name: str = '.pot-svt-env'
     js_project_dir_name: str = '.pot-node'
     substitutions: Dict[str, str] = {}
-    resp_attr_replacements: Dict[str, Dict[str, str]] = {}
+    resp_attr_replacements: Dict[str, List[Dict[str, str]]] = {}
     always_create_environments: bool = False
     debug: bool = False
 

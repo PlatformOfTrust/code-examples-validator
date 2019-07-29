@@ -70,22 +70,31 @@ def test_reusing_response_from_prev_requests(
 def test_save_and_load_test_result_to_map(temp_files_factory):
     root_dir = temp_files_factory([
         'api/user/POST/curl',
-        'api/user/{id}/GET/curl'
+        'api/user/{id}/GET/curl',
+        'api/user/{id}/friend/POST/curl',
+        'api/user/{id}/friend/{fid}/GET/curl',
     ])
     samples = load_code_samples(root_dir)
     parent_sample = samples[0]
     child_sample = samples[1]
+    child_sample_post = samples[2]
+    grand_child_sample = samples[3]
 
     result_map = TestExecutionResultMap()
 
-    result_map.put(ApiTestResult(parent_sample, True, json_body={1: 2}))
-    result_map.put(ApiTestResult(child_sample, True))
+    result_map.put(ApiTestResult(parent_sample, passed=True, json_body={1: 2}))
+    result_map.put(ApiTestResult(child_sample, passed=True))
+    result_map.put(
+        ApiTestResult(child_sample_post, passed=True, json_body={3: 4})
+    )
 
     assert result_map.get_parent_result(parent_sample) is None
     assert result_map.get_parent_result(child_sample).sample == parent_sample
 
     assert result_map.get_parent_body(parent_sample) == {}
     assert result_map.get_parent_body(child_sample) == {1: 2}
+
+    assert result_map.get_parent_body(grand_child_sample) == {1: 2, 3: 4}
 
 
 def test_reusing_response_from_prev_requests_with_replacements(
@@ -99,9 +108,36 @@ def test_reusing_response_from_prev_requests_with_replacements(
     assert samples[-1].http_method == HttpMethod.get
 
     mocked_parse_stdout.return_value = ({'@id': 1}, 200)
-    conf.resp_attr_replacements = {'api/user': {'@id': 'id'}}
+    conf.resp_attr_replacements = {'api/user': [{'@id': 'id'}]}
     original_source_code = 'curl website/api/user/{id}'
     expected_source_code = 'curl website/api/user/1'
+    samples[-1].path.write_text(original_source_code)
+
+    session = TestSession(samples)
+    session.run()
+    actual_code = session.runners[Language.shell].tmp_sample_path.read_text()
+    assert actual_code == expected_source_code
+
+
+def test_reusing_response_from_prev_requests_nested(
+        run_sys_cmd, mocked_parse_stdout, temp_files_factory, reporter,
+        no_cleanup, monkeypatch):
+    root_dir = temp_files_factory([
+        'api/users/POST/curl',
+        'api/users/{from}/link/{to}/POST/curl',
+        'api/users/{from}/link/{to}/{type}/GET/curl',
+    ])
+    samples = load_code_samples(root_dir)
+
+    mocked_parse_stdout.side_effect = [
+        ({'id': 'uuid'}, 200), ({}, 200), ({}, 200)
+    ]
+    conf.resp_attr_replacements = {
+        'api/users': [{'id': 'from'}]
+    }
+
+    original_source_code = 'curl /users/{from}/link/{to}/{type}'
+    expected_source_code = 'curl /users/uuid/link/{to}/{type}'
     samples[-1].path.write_text(original_source_code)
 
     session = TestSession(samples)

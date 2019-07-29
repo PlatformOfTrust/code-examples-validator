@@ -17,26 +17,28 @@ class TestExecutionResultMap:
 
     def put(self,
             test_result: ApiTestResult,
-            replace_keys: Optional[Dict[str, str]] = None):
-        replace_keys = replace_keys or {}
+            replace_keys: Optional[List[Dict[str, str]]] = None):
+        replace_keys = replace_keys or []
         parent_body = test_result.json_body or {}
-        for key_from, key_to in replace_keys.items():
-            if key_from in parent_body:
-                parent_body[key_to] = parent_body[key_from]
+        for replacement in replace_keys:
+            for key_from, key_to in replacement.items():
+                if key_from in parent_body:
+                    parent_body[key_to] = parent_body[key_from]
         self._put_test_result(
             self._map, test_result, path=test_result.sample.name,
         )
 
     def get_parent_result(self, sample: CodeSample) -> Optional[ApiTestResult]:
         return self._get_parent_test_result(
-            self._map, sample, path=sample.name,
+            self._map, sample, path=sample.name, current_body={}
         )
 
     def get_parent_body(self, sample: CodeSample) -> dict:
-        parent_result = self.get_parent_result(sample)
-        if parent_result is not None:
-            return parent_result.json_body or {}
-        return {}
+        body = {}
+        self._get_parent_test_result(
+            self._map, sample, path=sample.name, current_body=body
+        )
+        return body
 
     def _put_test_result(
             self,
@@ -75,6 +77,7 @@ class TestExecutionResultMap:
             current_dict: dict,
             sample: CodeSample,
             path: str,
+            current_body: dict,
             current_parent: Optional[ApiTestResult] = None,
     ) -> Optional[ApiTestResult]:
         """
@@ -97,6 +100,8 @@ class TestExecutionResultMap:
         current_methods = current_dict.get('methods', {})
         current_parent = current_methods.get(HttpMethod.post, current_parent)
         next_dict = current_dict.get(current_path)
+        if current_parent and current_parent.json_body:
+            current_body.update(current_parent.json_body)
         if not next_dict:
             return current_parent
 
@@ -104,7 +109,7 @@ class TestExecutionResultMap:
             return current_parent
         else:
             return self._get_parent_test_result(
-                next_dict, sample, further_path, current_parent,
+                next_dict, sample, further_path, current_body, current_parent,
             )
 
 
