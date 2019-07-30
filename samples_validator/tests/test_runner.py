@@ -172,6 +172,7 @@ def test_before_sample_replacements(
         sample.name: {
             'resource': 'Identity',
             'subs': {'@id': '<username>'},
+            'method': 'POST',
         }
     }
 
@@ -206,6 +207,7 @@ def test_before_sample_replacements_nested_path(
         samples[0].name: {
             'resource': 'Identity',
             'subs': {'@id': 'id'},
+            'method': 'POST',
         }
     }
 

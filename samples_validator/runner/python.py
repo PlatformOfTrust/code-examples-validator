@@ -1,4 +1,5 @@
 import ast
+import json
 import shutil
 import tempfile
 from pathlib import Path
@@ -57,9 +58,18 @@ class PythonRunner(CodeRunner):
     def _parse_stdout(self, stdout: str):
         try:
             raw_result = ast.literal_eval(stdout.strip())
+            status_code = raw_result['code']
+            if status_code == 204:
+                return None, status_code
+        except (IndexError, KeyError):
+            raise errors.ConformToSchemaError
         except (SyntaxError, ValueError):
             raise errors.OutputParsingError
         try:
-            return raw_result['raw_body'], raw_result['code']
-        except KeyError:
+            raw_body = raw_result['raw_body']
+            if isinstance(raw_body, dict):
+                return raw_result['raw_body'], status_code
+            else:
+                return json.loads(raw_body), status_code
+        except (KeyError, json.JSONDecodeError):
             raise errors.ConformToSchemaError

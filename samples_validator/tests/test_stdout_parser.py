@@ -180,3 +180,16 @@ def test_python_single_quoted_json_load(run_sys_cmd, runner_sample_factory):
     test_result = runner.run_sample(sample)
     assert test_result.passed
     assert test_result.status_code == 200
+
+
+@pytest.mark.parametrize('lang', [Language.js, Language.python])
+def test_empty_raw_body_204_response(lang, run_sys_cmd, runner_sample_factory):
+    runner, sample = runner_sample_factory(lang)
+    stdout = '{"raw_body": "", "code": 204}'
+    run_sys_cmd.return_value = SystemCmdResult(
+        exit_code=0, stdout=stdout, stderr=''
+    )
+    test_result = runner.run_sample(sample)
+    assert test_result.passed
+    assert test_result.status_code == 204
+    assert test_result.json_body is None

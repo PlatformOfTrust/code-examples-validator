@@ -71,6 +71,17 @@ def test_sorting_by_endpoint(temp_files_factory, run_sys_cmd):
     ]
 
 
+def test_loading_by_keyword(temp_files_factory):
+    root_dir = temp_files_factory([
+        'one-api/resource/POST/curl',
+        'another-one-api/resource//DELETE/curl',
+        'api/resource/POST/curl',
+        'on-more-api/resource/DELETE/curl',
+    ])
+    samples = load_code_samples(root_dir, keyword='one')
+    assert len(samples) == 2
+
+
 def test_parents_and_child_sorting_simple(temp_files_factory):
     root_dir = temp_files_factory([
         'api/_parent/POST/curl',

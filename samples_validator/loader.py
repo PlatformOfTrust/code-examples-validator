@@ -36,7 +36,8 @@ def make_sample_name_from_path(path: Path) -> str:
 
 def load_code_samples(
         root: Path,
-        languages: Optional[List[Language]] = None) -> List[CodeSample]:
+        languages: Optional[List[Language]] = None,
+        keyword: str = '') -> List[CodeSample]:
     if languages is None:
         languages = [Language.js, Language.python, Language.shell]
     samples = []
@@ -50,7 +51,7 @@ def load_code_samples(
                 http_method=http_method,
                 name=name,
             )
-            if sample.lang in languages:
+            if sample.lang in languages and keyword in sample.name:
                 samples.append(sample)
 
     return sort_code_samples(samples)

@@ -6,8 +6,9 @@ from loguru import logger
 
 from samples_validator.base import Language
 from samples_validator.conf import conf
+from samples_validator.loader import load_code_samples
 from samples_validator.runner.base import APP_LOG_HANDLER
-from samples_validator.session import make_session_from_dir
+from samples_validator.session import TestSession
 
 
 @click.command()
@@ -27,13 +28,17 @@ from samples_validator.session import make_session_from_dir
     type=click.Choice(['python', 'js', 'shell']),
     help='Run samples only for that language. Run all of them by default',
 )
-def run_tests(samples_dir: str, config: str, lang: str):
+@click.option(
+    '-k', '--keyword', help='Sample name filter',
+)
+def run_tests(samples_dir: str, config: str, lang: str, keyword: str):
     setup_logging()
     if config:
         conf.reload(Path(config))
     conf.validate_environment()
     languages = [Language[lang]] if lang else None
-    test_session = make_session_from_dir(Path(samples_dir), languages)
+    samples = load_code_samples(Path(samples_dir), languages, keyword or '')
+    test_session = TestSession(samples)
     failed_tests_count = test_session.run()
     sys.exit(failed_tests_count)
 

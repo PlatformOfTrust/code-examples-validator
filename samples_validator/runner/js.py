@@ -57,10 +57,13 @@ class NodeRunner(CodeRunner):
     def _parse_stdout(self, stdout: str):
         try:
             raw_result = json.loads(stdout.strip(), encoding='utf8')
-            if isinstance(raw_result['raw_body'], dict):
-                return raw_result['raw_body'], raw_result['code']
+            status_code = raw_result['code']
+            if status_code == 204:
+                return None, status_code
+            elif isinstance(raw_result['raw_body'], dict):
+                return raw_result['raw_body'], status_code
             else:
-                return json.loads(raw_result['raw_body']), raw_result['code']
+                return json.loads(raw_result['raw_body']), status_code
         except json.JSONDecodeError:
             raise errors.OutputParsingError
         except KeyError:

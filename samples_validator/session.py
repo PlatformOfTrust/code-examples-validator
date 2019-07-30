@@ -1,9 +1,7 @@
-from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from samples_validator.base import ApiTestResult, CodeSample, Language
 from samples_validator.conf import conf
-from samples_validator.loader import load_code_samples
 from samples_validator.prerequisites.base import ResourceRegistry
 from samples_validator.reporter import Reporter
 from samples_validator.runner import CurlRunner, NodeRunner, PythonRunner
@@ -70,10 +68,3 @@ class TestSession:
             reporter.show_short_test_status(test_result)
         self._resource_registry.cleanup()
         return test_results
-
-
-def make_session_from_dir(
-        path: Path,
-        languages: Optional[List[Language]]) -> TestSession:
-    all_samples = load_code_samples(path, languages)
-    return TestSession(all_samples)

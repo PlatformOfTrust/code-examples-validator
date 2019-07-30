@@ -1,5 +1,5 @@
-sample_timeout: 6
-debug: True
+sample_timeout: 7
+debug: False
 api_url: '$TESTING_API_URL'
 access_token: '$TESTING_ACCESS_TOKEN'
 substitutions:
