@@ -48,16 +48,16 @@ class TestSession:
         test_results = []
 
         for sample in samples:
-            reporter.show_test_is_running(sample)
             prerequisite_subs: Dict[str, dict] = {}
             if sample.name in conf.before_sample:
-                resource_name = conf.before_sample[sample.name]['resource']
-                resource_subs = conf.before_sample[sample.name]['subs']
-                prerequisite_subs = self._resource_registry.create_resource(
-                    resource_name, resource_subs,
-                )
+                params = conf.before_sample[sample.name]
+                if params['method'] == sample.http_method.value:
+                    prerequisite_subs = self._resource_registry.create(
+                        params['resource'], params['subs'],
+                    )
             substitutions = self._test_results_map.get_parent_body(sample)
             substitutions.update(prerequisite_subs)
+            reporter.show_test_is_running(sample)
             test_result = self.runners[lang].run_sample(
                 sample, substitutions,
             )

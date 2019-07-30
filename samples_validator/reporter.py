@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+from shutil import get_terminal_size
 from typing import List
 
 from loguru import logger
@@ -5,14 +7,25 @@ from loguru import logger
 from samples_validator import errors
 from samples_validator.base import ApiTestResult, CodeSample, Language
 from samples_validator.conf import conf
+from samples_validator.runner.base import APP_LOG_HANDLER
 
 
 def debug(message: str):
     logger.debug(message)
 
 
-def log(message: str):
-    logger.log('regular', message)  # TODO: move to consts
+@contextmanager
+def patch_stream_handler_terminator(enabled=False):
+    if enabled:
+        APP_LOG_HANDLER.terminator = ''
+    yield
+    if enabled:
+        APP_LOG_HANDLER.terminator = '\n'
+
+
+def log(message: str, no_new_line: bool = False):
+    with patch_stream_handler_terminator(no_new_line):
+        logger.log('regular', message)  # TODO: move to consts
 
 
 def log_red(message: str):
@@ -95,6 +108,7 @@ class Reporter:
         log(f'{divider} Test: {test_result.sample.name} {divider}')
         log(f'Path: {test_result.sample.path.as_posix()}')
         log(f'Method: {test_result.sample.http_method.value}')
+        log('Duration: {:.1f}'.format(test_result.duration))
         if not test_result.passed:
             error_reason(test_result)
         if test_result.passed and conf.debug:
@@ -105,16 +119,18 @@ class Reporter:
     @staticmethod
     def show_short_test_status(test_result: ApiTestResult):
         if test_result.passed:
-            log_green(' [PASSED]')
+            log_green('[PASSED]')
         else:
-            log_red(' [FAILED]')
+            log_red('[FAILED]')
 
     def print_test_session_report(self, test_results: List[ApiTestResult]):
         passed_count = 0
         failed_count = 0
+        overall_time = 0.0
         log_fn = log_green
         log('')
         for test_result in test_results:
+            overall_time += test_result.duration
             if test_result.passed:
                 passed_count += 1
             else:
@@ -123,8 +139,17 @@ class Reporter:
             self._explain_in_details(test_result)
         if failed_count:
             conclusion = 'Test session failed'
+            log('== List of failed tests ==')
+            for test_result in test_results:
+                if not test_result.passed:
+                    log((
+                        f'{test_result.sample.lang.value} - '
+                        f'{test_result.sample.name} - '
+                        f'{test_result.sample.http_method.value}'
+                    ))
         else:
             conclusion = 'Test session passed'
+        log('Time spent: {:.1f}s'.format(overall_time))
         description = '{} total, {} passed, {} failed'.format(
             len(test_results), passed_count, failed_count,
         )
@@ -141,4 +166,10 @@ class Reporter:
 
     @staticmethod
     def show_test_is_running(sample: CodeSample):
-        log('{:>6}: {}'.format(sample.http_method.value, sample.name))
+        message = '{:>6}: {}'.format(sample.http_method.value, sample.name)
+        terminal_width = get_terminal_size((100, 20)).columns
+        spaces = 2
+        status_len = 8
+        dots_count = terminal_width - len(message) - spaces - status_len
+        dots = '.' * dots_count if dots_count > 0 else ''
+        log(f'{message} {dots} ', no_new_line=True)

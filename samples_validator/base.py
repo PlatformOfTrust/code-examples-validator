@@ -55,6 +55,7 @@ class ApiTestResult(object):
     json_body: Optional[dict] = None
     reason: Any = None  # add typing
     source_code: Optional[str] = None
+    duration: float = 0.0
 
 
 def run_shell_command(

@@ -6,6 +6,7 @@ from loguru import logger
 
 from samples_validator.base import Language
 from samples_validator.conf import conf
+from samples_validator.runner.base import APP_LOG_HANDLER
 from samples_validator.session import make_session_from_dir
 
 
@@ -42,7 +43,7 @@ def setup_logging():
     logger.level('regular', no=100)
     logger.level('red', no=101, color='<red>')
     logger.level('green', no=102, color='<green>')
-    logger.add(sys.stdout, colorize=True, format='<level>{message}</>',
+    logger.add(APP_LOG_HANDLER, colorize=True, format='<level>{message}</>',
                level='DEBUG')
 
 

@@ -5,6 +5,7 @@ from typing import Dict, Optional, Tuple
 import requests
 
 from samples_validator.conf import conf
+from samples_validator.reporter import debug
 
 API_URL = f'https://{conf.api_url}'
 
@@ -48,11 +49,14 @@ class Resource:
     def create(
             self,
             payload: Optional[dict] = None) -> Tuple[int, Optional[dict]]:
-        response = self._create(payload)
+        debug(f'Creating {self.__class__.__name__}')
+        code, response = self._create(payload)
+        debug(f'Status code: {code}')
         self._created = True
-        return response
+        return code, response
 
     def delete(self) -> int:
+        debug(f'Removing {self.__class__.__name__} <{self.id_field}>')
         response = self._delete()
         self._deleted = True
         return response
@@ -85,7 +89,7 @@ class ResourceRegistry:
     def __init__(self):
         self.resources = []
 
-    def create_resource(
+    def create(
             self,
             name: str,
             substitutions: Dict[str, str]) -> dict:

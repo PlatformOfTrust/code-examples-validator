@@ -1,7 +1,10 @@
 import json
 import os
 import re
+import sys
+import time
 from abc import abstractmethod
+from logging import StreamHandler
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
@@ -9,6 +12,8 @@ from samples_validator import errors
 from samples_validator.base import ApiTestResult, CodeSample, SystemCmdResult
 from samples_validator.conf import conf
 from samples_validator.utils import parse_edn_spec_file
+
+APP_LOG_HANDLER = StreamHandler(sys.stdout)
 
 
 class CodeRunner(object):
@@ -58,17 +63,20 @@ class CodeRunner(object):
             self._cleanup(sample)
 
     def analyze_result(self, sample: CodeSample) -> ApiTestResult:
+        start_time = time.time()
         try:
             cmd_result = self._run_sample(str(self.tmp_sample_path))
         except errors.ExecutionTimeout:
             return ApiTestResult(
                 sample, passed=False, reason=errors.ExecutionTimeout,
+                duration=conf.sample_timeout,
             )
+        duration = time.time() - start_time
 
         if cmd_result.exit_code != 0:
             return ApiTestResult(
                 sample, passed=False, reason=errors.NonZeroExitCode,
-                cmd_result=cmd_result,
+                cmd_result=cmd_result, duration=duration,
             )
 
         try:
@@ -76,14 +84,14 @@ class CodeRunner(object):
         except errors.OutputParsingError as exc:
             return ApiTestResult(
                 sample, passed=False, reason=exc.__class__,
-                cmd_result=cmd_result,
+                cmd_result=cmd_result, duration=duration,
             )
 
         if status_code >= 400:
             return ApiTestResult(
                 sample, passed=False, reason=errors.BadRequest,
                 cmd_result=cmd_result, json_body=json_body,
-                status_code=status_code,
+                status_code=status_code, duration=duration,
             )
 
         return ApiTestResult(
@@ -93,6 +101,7 @@ class CodeRunner(object):
             reason=None,
             sample=sample,
             cmd_result=cmd_result,
+            duration=duration,
         )
 
     @staticmethod

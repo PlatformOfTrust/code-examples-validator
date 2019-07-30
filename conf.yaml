@@ -1,4 +1,4 @@
-sample_timeout: 5
+sample_timeout: 6
 debug: True
 api_url: '$TESTING_API_URL'
 access_token: '$TESTING_ACCESS_TOKEN'
@@ -21,16 +21,20 @@ resp_attr_replacements:
 before_sample:
   'message-api/messages/{version}':
     resource: 'Identity'
+    method: 'POST'
     subs:
       '@id': '<to identity ID>'
   'calendar-api/calendars/{version}':
     resource: 'Identity'
+    method: 'POST'
     subs:
       '@id': '<to identity ID>'
   'identity-api/identities/v1/{from_identity}/link/{to_identity}':
     resource: 'Identity'
+    method: 'POST'
     subs:
       '@id': 'to_identity'
   'product-api/products/{version}':
     resource: 'DeleteProduct'
+    method: 'POST'
     subs: {}

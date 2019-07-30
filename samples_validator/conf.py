@@ -32,7 +32,7 @@ class Config(BaseModel):
     def _replace_env_vars(self, raise_error: bool = False):
         if self.substitutions is None:
             return
-        missing_variables = []
+        missing_variables = set()
         for key, value in self.substitutions.items():
             if value.startswith('$'):
                 var_name = value[1:]
@@ -40,7 +40,7 @@ class Config(BaseModel):
                 if real_value is not None:
                     self.substitutions[key] = real_value
                 else:
-                    missing_variables.append(var_name)
+                    missing_variables.add(var_name)
         for key in self.fields:
             attr = getattr(self, key)
             if isinstance(attr, str) and attr.startswith('$'):
@@ -49,7 +49,7 @@ class Config(BaseModel):
                 if real_value is not None:
                     setattr(self, key, real_value)
                 else:
-                    missing_variables.append(var_name)
+                    missing_variables.add(var_name)
         if missing_variables and raise_error:
             variables = ', '.join(missing_variables)
             raise ValueError(
