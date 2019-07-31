@@ -46,13 +46,7 @@ class TestSession:
         test_results = []
 
         for sample in samples:
-            prerequisite_subs: Dict[str, dict] = {}
-            if sample.name in conf.before_sample:
-                params = conf.before_sample[sample.name]
-                if params['method'] == sample.http_method.value:
-                    prerequisite_subs = self._resource_registry.create(
-                        params['resource'], params['subs'],
-                    )
+            prerequisite_subs = self.extract_prerequisite_subs(sample)
             substitutions = self._test_results_map.get_parent_body(sample)
             substitutions.update(prerequisite_subs)
             reporter.show_test_is_running(sample)
@@ -68,3 +62,17 @@ class TestSession:
             reporter.show_short_test_status(test_result)
         self._resource_registry.cleanup()
         return test_results
+
+    def extract_prerequisite_subs(
+            self,
+            sample: CodeSample) -> Dict[str, dict]:
+        if sample.name not in conf.before_sample:
+            return {}
+        prerequisite_subs: Dict[str, dict] = {}
+        for params in conf.before_sample[sample.name]:
+            if params['method'] == sample.http_method.value:
+                subs = self._resource_registry.create(
+                    params['resource'], params['subs'],
+                )
+                prerequisite_subs.update(subs)
+        return prerequisite_subs

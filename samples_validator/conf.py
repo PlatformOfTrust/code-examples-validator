@@ -17,7 +17,7 @@ class Config(BaseModel):
     resp_attr_replacements: Dict[str, List[dict]] = {}
     always_create_environments: bool = False
     debug: bool = False
-    before_sample: Dict[str, dict] = {}
+    before_sample: Dict[str, List[dict]] = {}
     ignore_failures: Dict[str, List[str]] = {}
 
     def reload(self, path: Path):

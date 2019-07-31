@@ -169,11 +169,11 @@ def test_before_sample_replacements(
     mocked_parse_stdout.return_value = ({}, 200)
 
     conf.before_sample = {
-        sample.name: {
+        sample.name: [{
             'resource': 'Identity',
             'subs': {'@id': '<username>'},
             'method': 'POST',
-        }
+        }]
     }
 
     session = TestSession([sample])
@@ -204,11 +204,11 @@ def test_before_sample_replacements_nested_path(
     mocked_parse_stdout.return_value = ({'stub': 'data'}, 200)
 
     conf.before_sample = {
-        samples[0].name: {
+        samples[0].name: [{
             'resource': 'Identity',
             'subs': {'@id': 'id'},
             'method': 'POST',
-        }
+        }]
     }
 
     session = TestSession(samples)

@@ -51,7 +51,10 @@ class Resource:
             payload: Optional[dict] = None) -> Tuple[int, Optional[dict]]:
         debug(f'Creating {self.__class__.__name__}')
         code, response = self._create(payload)
-        debug(f'Status code: {code}')
+        if self.id_field:
+            debug(f'Success ({code}): {self.id_field}')
+        else:
+            debug(f'Status code: {code}')
         self._created = True
         return code, response
 
