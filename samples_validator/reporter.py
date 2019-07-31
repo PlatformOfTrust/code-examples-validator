@@ -36,6 +36,10 @@ def log_green(message: str):
     logger.log('green', message)
 
 
+def log_yellow(message: str):
+    logger.log('yellow', message)
+
+
 class Reporter:
 
     def _explain_non_zero_code(self, test_result: ApiTestResult):
@@ -120,12 +124,15 @@ class Reporter:
     def show_short_test_status(test_result: ApiTestResult):
         if test_result.passed:
             log_green('[PASSED]')
+        elif test_result.ignored:
+            log_yellow('[IGNORE]')
         else:
             log_red('[FAILED]')
 
     def print_test_session_report(self, test_results: List[ApiTestResult]):
         passed_count = 0
         failed_count = 0
+        ignored_count = 0
         overall_time = 0.0
         log_fn = log_green
         log('')
@@ -133,15 +140,27 @@ class Reporter:
             overall_time += test_result.duration
             if test_result.passed:
                 passed_count += 1
+            elif test_result.ignored:
+                ignored_count += 1
+                log_fn = log_yellow
             else:
                 failed_count += 1
                 log_fn = log_red
             self._explain_in_details(test_result)
+        if ignored_count:
+            log('== List of ignored tests ==')
+            for test_result in test_results:
+                if test_result.ignored:
+                    log((
+                        f'{test_result.sample.lang.value} - '
+                        f'{test_result.sample.name} - '
+                        f'{test_result.sample.http_method.value}'
+                    ))
         if failed_count:
             conclusion = 'Test session failed'
             log('== List of failed tests ==')
             for test_result in test_results:
-                if not test_result.passed:
+                if test_result.failed:
                     log((
                         f'{test_result.sample.lang.value} - '
                         f'{test_result.sample.name} - '
@@ -150,10 +169,10 @@ class Reporter:
         else:
             conclusion = 'Test session passed'
         log('Time spent: {:.1f}s'.format(overall_time))
-        description = '{} total, {} passed, {} failed'.format(
-            len(test_results), passed_count, failed_count,
+        description = '{} total, {} passed, {} failed, {} ignored'.format(
+            len(test_results), passed_count, failed_count, ignored_count,
         )
-        log_fn(f'== {conclusion} ==\n{description}')
+        log_fn(f'\n== {conclusion} ==\n{description}')
 
     @staticmethod
     def show_language_scope_run(lang: Language):

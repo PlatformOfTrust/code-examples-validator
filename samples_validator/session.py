@@ -37,7 +37,7 @@ class TestSession:
             )
 
         reporter.print_test_session_report(results)
-        failed_count = sum(1 for res in results if not res.passed)
+        failed_count = sum(1 for res in results if res.failed)
         return failed_count
 
     def run_api_tests_for_lang(self, samples: List[CodeSample], lang: Language):

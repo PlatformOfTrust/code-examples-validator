@@ -57,6 +57,17 @@ class ApiTestResult(object):
     source_code: Optional[str] = None
     duration: float = 0.0
 
+    @property
+    def ignored(self):
+        if not self.passed and self.sample.name in conf.ignore_failures:
+            ignored_methods = conf.ignore_failures[self.sample.name]
+            return self.sample.http_method.value in ignored_methods
+        return False
+
+    @property
+    def failed(self):
+        return not self.passed and not self.ignored
+
 
 def run_shell_command(
         args: List[str],

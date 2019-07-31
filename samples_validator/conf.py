@@ -18,6 +18,7 @@ class Config(BaseModel):
     always_create_environments: bool = False
     debug: bool = False
     before_sample: Dict[str, dict] = {}
+    ignore_failures: Dict[str, List[str]] = {}
 
     def reload(self, path: Path):
         new_conf = load_config(path)

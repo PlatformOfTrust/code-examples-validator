@@ -48,6 +48,7 @@ def setup_logging():
     logger.level('regular', no=100)
     logger.level('red', no=101, color='<red>')
     logger.level('green', no=102, color='<green>')
+    logger.level('yellow', no=103, color='<yellow>')
     logger.add(APP_LOG_HANDLER, colorize=True, format='<level>{message}</>',
                level='DEBUG')
 

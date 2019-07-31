@@ -38,3 +38,8 @@ before_sample:
     resource: 'DeleteProduct'
     method: 'POST'
     subs: {}
+ignore_failures:
+  'broker-api/broker/{version}/fetch-data-product':
+    - 'POST'
+  'product-api/products/{version}/{product_code}':
+    - 'DELETE'
