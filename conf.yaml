@@ -1,10 +1,10 @@
 sample_timeout: 10
 debug: False
 api_url: '$TESTING_API_URL'
-access_token: '$TESTING_ACCESS_TOKEN'
+access_token: '$AUTH_TOKEN'
 substitutions:
   '{version}': 'v1'
-  '<ACCESS_TOKEN>': '$TESTING_ACCESS_TOKEN'
+  '<ACCESS_TOKEN>': '$AUTH_TOKEN'
   'api-sandbox.oftrust.net': '$TESTING_API_URL'
 
 resp_attr_replacements:
