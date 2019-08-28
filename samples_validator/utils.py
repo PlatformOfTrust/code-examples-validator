@@ -35,11 +35,18 @@ class TestExecutionResultMap:
             self._map, sample, path=sample.name, current_body={},
         )
 
-    def get_parent_body(self, sample: CodeSample) -> dict:
+    def get_parent_body(
+            self,
+            sample: CodeSample,
+            escaped: bool = False) -> dict:
         body: dict = {}
         self._get_parent_test_result(
             self._map, sample, path=sample.name, current_body=body,
         )
+        if escaped:
+            # we want to replace placeholders like "{data}",
+            # not the pure strings like "data"
+            body = {f'{{{k}}}': v for k, v in body.items()}
         return body
 
     def _put_test_result(

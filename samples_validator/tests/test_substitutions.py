@@ -38,7 +38,7 @@ def test_env_var_substitutions_in_config(monkeypatch):
 def test_replace_keywords_method(lang, runner_sample_factory):
     runner, sample = runner_sample_factory(lang)
     replace = runner.replace_keywords
-    assert replace('{version}', {'version': 'v1'}) == 'v1'
+    assert replace('{version}', {'version': 'v1'}) == '{v1}'
     assert replace('{version}', {'{version}': 'v1'}) == 'v1'
     assert replace('<TOKEN>', {'<TOKEN>': 'xxx'}) == 'xxx'
     assert replace('[{"a": "b"}]', {'[{"a": "b"}]': '[]'}) == '[]'

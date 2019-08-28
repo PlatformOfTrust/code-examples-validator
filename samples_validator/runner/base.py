@@ -109,15 +109,11 @@ class CodeRunner(object):
             text: str,
             subs: Optional[Dict[str, str]] = None) -> str:
         if subs is None:
-            _subs = conf.substitutions.copy() or {}
+            subs = conf.substitutions.copy() or {}
         else:
-            _subs = {
-                (k if k.startswith(('<', '[')) else f'{{{k}}}'): v
-                for k, v in subs.items()
-            }
-            _subs.update(conf.substitutions or {})
+            subs.update(conf.substitutions or {})
 
-        for replace_from, replace_to in _subs.items():
+        for replace_from, replace_to in subs.items():
             text = text.replace(replace_from, str(replace_to))
         return text
 

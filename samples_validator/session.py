@@ -47,7 +47,9 @@ class TestSession:
 
         for sample in samples:
             prerequisite_subs = self.extract_prerequisite_subs(sample)
-            substitutions = self._test_results_map.get_parent_body(sample)
+            substitutions = self._test_results_map.get_parent_body(
+                sample, escaped=True,
+            )
             substitutions.update(prerequisite_subs)
             reporter.show_test_is_running(sample)
             test_result = self.runners[lang].run_sample(
