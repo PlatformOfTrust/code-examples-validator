@@ -20,8 +20,6 @@ def _create_resource(
         headers['Authorization'] = f'Bearer {access_token}'
     response = requests.post(url, json=payload, headers=headers)
     code = response.status_code
-    if not response.ok:
-        return code, None
     try:
         return code, response.json()
     except json.JSONDecodeError:
@@ -54,7 +52,8 @@ class Resource:
         if self.id_field:
             debug(f'Success ({code}): {self.id_field}')
         else:
-            debug(f'Status code: {code}')
+            response_data = f' {response}' if response else ''
+            debug(f'Status code: {code}{response_data}')
         self._created = True
         return code, response
 

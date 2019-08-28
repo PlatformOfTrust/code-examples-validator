@@ -18,7 +18,7 @@ class Identity(Resource):
         code, body = _create_resource(
             self.base_url, self.generate_payload(), conf.access_token,
         )
-        if body:
+        if code < 400 and body:
             self._id_field = body.get('@id')
         return code, body
 
@@ -37,6 +37,9 @@ class Identity(Resource):
             'name': 'code-examples-validator',
             'context': 'context',
             'type': 'Owner',
+            'data': {
+                'name': 'code-examples-validator',
+            },
         }
 
 
