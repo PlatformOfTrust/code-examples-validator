@@ -46,7 +46,10 @@ class TestExecutionResultMap:
         if escaped:
             # we want to replace placeholders like "{data}",
             # not the pure strings like "data"
-            body = {f'{{{k}}}': v for k, v in body.items()}
+            body = {
+                f'{{{k}}}' if not k.startswith('{') else k: v
+                for k, v in body.items()
+            }
         return body
 
     def _put_test_result(
