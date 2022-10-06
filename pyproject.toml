@@ -40,7 +40,7 @@ mypy = "^0.711.0"
 pytest-cov = "^2.7"
 flake8-import-order = "^0.18.1"
 coverage = "^4.5"
-bottle = "^0.12.17"
+bottle = "^0.12.20"
 webargs = "^5.3"
 
 [tool.poetry.scripts]
